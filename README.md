@@ -1,3 +1,15 @@
+WIP
+
+
+
+
+--------------------------
+-----------------
+-----------------------
+---------------------------------
+-------------
+
+
 # Build Lightning Node with LDK
 
 Step 1: Run Bitcoin Node (in our case, to local bitcoind)
