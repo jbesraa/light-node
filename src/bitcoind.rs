@@ -83,24 +83,3 @@ pub fn generate_to_address(
     core_rpc.generate_to_address(block_num, &address).unwrap()
 }
 
-impl FeeEstimator for BitcoindClient {
-    fn get_est_sat_per_1000_weight(&self, confirmation_target: ConfirmationTarget) -> u32 {
-        match confirmation_target {
-            ConfirmationTarget::Background => self
-                .fees
-                .get(&Target::Background)
-                .unwrap()
-                .load(Ordering::Acquire),
-            ConfirmationTarget::Normal => self
-                .fees
-                .get(&Target::Normal)
-                .unwrap()
-                .load(Ordering::Acquire),
-            ConfirmationTarget::HighPriority => self
-                .fees
-                .get(&Target::HighPriority)
-                .unwrap()
-                .load(Ordering::Acquire),
-        }
-    }
-}
