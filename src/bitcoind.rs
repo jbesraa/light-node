@@ -1,4 +1,6 @@
 #![allow(unused_imports)]
+use bitcoin::hash_types::{BlockHash, Txid};
+use lightning_block_sync::{AsyncBlockSourceResult, BlockData, BlockHeaderData, BlockSource};
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::{DerivationPath, KeySource};
 use bdk::bitcoin::Amount;
@@ -19,7 +21,6 @@ use bdk::wallet::wallet_name_from_descriptor;
 use bdk::wallet::{signer::SignOptions, AddressIndex};
 use bdk::Wallet;
 use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
-use rand::prelude::*;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -82,4 +83,31 @@ pub fn generate_to_address(
     let core_rpc = connect(None);
     core_rpc.generate_to_address(block_num, &address).unwrap()
 }
+
+// pub fn header(
+//     address: bdk::bitcoin::Address,
+//     block_num: u64,
+// ) -> Vec<bdk::bitcoin::BlockHash> {
+//     let core_rpc = connect(None);
+//     core_rpc.get_header().unwrap();
+// }
+
+
+// impl BlockSource for BitcoindClient {
+// 	fn get_header<'a>(
+// 		&'a self, header_hash: &'a BlockHash, height_hint: Option<u32>,
+// 	) -> AsyncBlockSourceResult<'a, BlockHeaderData> {
+// 		Box::pin(async move { self.bitcoind_rpc_client.get_header(header_hash, height_hint).await })
+// 	}
+
+// 	fn get_block<'a>(
+// 		&'a self, header_hash: &'a BlockHash,
+// 	) -> AsyncBlockSourceResult<'a, BlockData> {
+// 		Box::pin(async move { self.bitcoind_rpc_client.get_block(header_hash).await })
+// 	}
+
+// 	fn get_best_block<'a>(&'a self) -> AsyncBlockSourceResult<(BlockHash, Option<u32>)> {
+// 		Box::pin(async move { self.bitcoind_rpc_client.get_best_block().await })
+// 	}
+// }
 
