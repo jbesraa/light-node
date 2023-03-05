@@ -1,10 +1,13 @@
-use lightning_block_sync::init;
 use bitcoin::network::constants::Network;
+use lightning::chain;
 use lightning::ln::channelmanager::{
     ChainParameters, ChannelManagerReadArgs, SimpleArcChannelManager,
 };
 use lightning::util::config::UserConfig;
 use lightning::util::ser::ReadableArgs;
+use lightning_block_sync::init;
+use lightning_block_sync::poll;
+use lightning_block_sync::UnboundedCache;
 use std::fs::File;
 use std::sync::Arc;
 
@@ -72,8 +75,8 @@ pub async fn start_node() {
 
     /* FRESH CHANNELMANAGER */
 
-    let block_source = block_sync::BitcoindClientLight::new().await.unwrap();
-    let polled_chain_tip = init::validate_best_block_header(&block_source)
+    let block_source = Arc::new(block_sync::BitcoindClientLight::new().await.unwrap());
+    let polled_chain_tip = init::validate_best_block_header(block_source.clone())
         .await
         .expect("Failed to fetch best block header and best block");
     let best_block = polled_chain_tip.to_best_block();
@@ -83,14 +86,14 @@ pub async fn start_node() {
         // let best_blockhash = // insert the best blockhash you know of
         // let best_chain_height = // insert the height corresponding to best_blockhash
         let chain_params = ChainParameters {
-            network: Network::Testnet, // substitute this with your network
-            best_block: best_block
+            network: Network::Regtest, // substitute this with your network
+            best_block: best_block,
         };
         let fresh_channel_manager = ChannelManager::new(
-            fee_estimator,
+            fee_estimator.clone(),
             chain_monitor,
-            broadcaster_interface,
-            logger,
+            broadcaster_interface.clone(),
+            logger.clone(),
             keys_manager,
             user_config,
             chain_params,
@@ -98,4 +101,79 @@ pub async fn start_node() {
         (best_block_hash, fresh_channel_manager)
     };
     // End step 8
+    let mut chain_listener_channel_monitors = Vec::new();
+    let mut cache = UnboundedCache::new();
+    let restarting_node = false;
+    let mut chain_tip: Option<poll::ValidatedBlockHeader> = None;
+    let mut chain_listeners = vec![(
+        channel_manager_blockhash,
+        &channel_manager as & dyn chain::Listen,
+    )];
+
+    for (blockhash, channel_monitor) in channel_monitors.drain(..) {
+        let outpoint = channel_monitor.get_funding_txo().0;
+        chain_listener_channel_monitors.push((
+            blockhash,
+            (channel_monitor, broadcaster_interface.clone(), fee_estimator.clone(), logger.clone()),
+            outpoint,
+        ));
+    }
+
+    for monitor_listener_info in chain_listener_channel_monitors.iter_mut() {
+        chain_listeners.push((
+            monitor_listener_info.0,
+            &mut monitor_listener_info.1 as &mut dyn chain::Listen,
+        ));
+    }
+
+    // Save the chain tip to be used in Step 14.
+    chain_tip = Some(
+        init::synchronize_listeners(
+            block_source.clone().as_ref(),
+            Network::Testnet,
+            &mut cache,
+            chain_listeners,
+        )
+        .await
+        .unwrap(),
+    );
+
+    // let chain_tip = if restarting_node {
+    //     let mut chain_listeners = vec![(
+    //         channel_manager_blockhash,
+    //         &channel_manager as &(dyn chain::Listen + Send + Sync),
+    //     )];
+
+    //     for (blockhash, channel_monitor) in channel_monitors.drain(..) {
+    //         let outpoint = channel_monitor.get_funding_txo().0;
+    //         chain_listener_channel_monitors.push((
+    //             blockhash,
+    //             (
+    //                 channel_monitor,
+    //                 broadcaster_interface.clone(),
+    //                 fee_estimator.clone(),
+    //                 logger.clone(),
+    //             ),
+    //             outpoint,
+    //         ));
+    //     }
+
+    //     for monitor_listener_info in chain_listener_channel_monitors.iter_mut() {
+    //         chain_listeners.push((
+    //             monitor_listener_info.0,
+    //             &monitor_listener_info.1 as &(dyn chain::Listen + Send + Sync),
+    //         ));
+    //     }
+
+    //     init::synchronize_listeners(
+    //         block_source.as_ref(),
+    //         Network::Regtest,
+    //         &mut cache,
+    //         chain_listeners,
+    //     )
+    //     .await
+    //     .unwrap()
+    // } else {
+    //     polled_chain_tip
+    // };
 }
