@@ -1,15 +1,27 @@
+use bitcoin::blockdata::constants::genesis_block;
+
 use bitcoin::network::constants::Network;
-use lightning::chain;
+use lightning::chain::keysinterface::{KeysInterface, Recipient};
+use lightning::chain::{self, ChannelMonitorUpdateStatus, Watch};
 use lightning::ln::channelmanager::{
     ChainParameters, ChannelManagerReadArgs, SimpleArcChannelManager,
 };
+
+use lightning_background_processor::{BackgroundProcessor, GossipSync};
+use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler, PeerManager};
+use lightning::onion_message::OnionMessenger;
+use lightning::routing::gossip::{NetworkGraph, P2PGossipSync};
 use lightning::util::config::UserConfig;
 use lightning::util::ser::ReadableArgs;
 use lightning_block_sync::init;
 use lightning_block_sync::poll;
 use lightning_block_sync::UnboundedCache;
+use std::convert::TryInto;
 use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
 use std::sync::Arc;
+use std::time::SystemTime;
 
 pub mod block_sync;
 pub mod broadcast;
@@ -19,6 +31,7 @@ pub mod fee_estimator;
 pub mod keys_manager;
 pub mod logger;
 pub mod persister;
+use rand::{thread_rng, Rng};
 
 pub(crate) type ChannelManager = SimpleArcChannelManager<
     chain_monitor::ChainMonitor,
@@ -26,6 +39,19 @@ pub(crate) type ChannelManager = SimpleArcChannelManager<
     fee_estimator::MyFeeEstimator,
     logger::MyLogger,
 >;
+
+fn read_network(
+    path: &Path,
+    genesis_hash: BlockHash,
+    logger: Arc<logger::MyLogger>,
+) -> NetworkGraph<Arc<logger::MyLogger>> {
+    if let Ok(file) = File::open(path) {
+        if let Ok(graph) = NetworkGraph::read(&mut BufReader::new(file), logger.clone()) {
+            return graph;
+        }
+    }
+    NetworkGraph::new(genesis_hash, logger)
+}
 
 pub async fn start_node() {
     let ldk_data_dir = format!("{}/.ldk", ".");
@@ -91,7 +117,7 @@ pub async fn start_node() {
         };
         let fresh_channel_manager = ChannelManager::new(
             fee_estimator.clone(),
-            chain_monitor,
+            chain_monitor.clone(),
             broadcaster_interface.clone(),
             logger.clone(),
             keys_manager,
@@ -107,14 +133,19 @@ pub async fn start_node() {
     let mut chain_tip: Option<poll::ValidatedBlockHeader> = None;
     let mut chain_listeners = vec![(
         channel_manager_blockhash,
-        &channel_manager as & dyn chain::Listen,
+        &channel_manager as &dyn chain::Listen,
     )];
 
     for (blockhash, channel_monitor) in channel_monitors.drain(..) {
         let outpoint = channel_monitor.get_funding_txo().0;
         chain_listener_channel_monitors.push((
             blockhash,
-            (channel_monitor, broadcaster_interface.clone(), fee_estimator.clone(), logger.clone()),
+            (
+                channel_monitor,
+                broadcaster_interface.clone(),
+                fee_estimator.clone(),
+                logger.clone(),
+            ),
             outpoint,
         ));
     }
@@ -137,6 +168,60 @@ pub async fn start_node() {
         .await
         .unwrap(),
     );
+
+    // Step 10: Give ChannelMonitors to ChainMonitor
+    for item in chain_listener_channel_monitors.drain(..) {
+        let channel_monitor = item.1 .0;
+        let funding_outpoint = item.2;
+        assert_eq!(
+            chain_monitor
+                .clone()
+                .watch_channel(funding_outpoint, channel_monitor),
+            ChannelMonitorUpdateStatus::Completed
+        );
+    }
+
+    // Step 12: Optional: Initialize the P2PGossipSync
+    let genesis = genesis_block(Network::Regtest).header.block_hash();
+    let network_graph_path = format!("{}/network_graph", ldk_data_dir.clone());
+    let network_graph = Arc::new(read_network(
+        Path::new(&network_graph_path),
+        genesis,
+        logger.clone(),
+    ));
+    let gossip_sync = Arc::new(P2PGossipSync::new(
+        Arc::clone(&network_graph),
+        None::<Arc<dyn chain::Access + Send + Sync>>,
+        logger.clone(),
+    ));
+    //
+
+    let mut ephemeral_bytes = [0; 32];
+    rand::thread_rng().fill_bytes(&mut ephemeral_bytes);
+    let onion_messenger = Arc::new(OnionMessenger::new(
+        Arc::clone(&keys_manager),
+        Arc::clone(&logger),
+        IgnoringMessageHandler {},
+    ));
+    let lightning_msg_handler = MessageHandler {
+        chan_handler: Arc::new(channel_manager),
+        route_handler: gossip_sync.clone(),
+        onion_message_handler: onion_messenger.clone(),
+    };
+    let ignoring_custom_msg_handler = IgnoringMessageHandler {};
+
+    let current_time = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let peer_manager = Arc::new(PeerManager::new(
+        lightning_msg_handler,
+        keys_manager.get_node_secret(Recipient::Node).unwrap(),
+        current_time.try_into().unwrap(),
+        &ephemeral_bytes,
+        logger,
+        &ignoring_custom_msg_handler,
+    ));
 
     // let chain_tip = if restarting_node {
     //     let mut chain_listeners = vec![(
