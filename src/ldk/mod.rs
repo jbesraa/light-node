@@ -1,4 +1,5 @@
 use bitcoin::blockdata::constants::genesis_block;
+use lightning_net_tokio::SocketDescriptor;
 
 use bitcoin::network::constants::Network;
 use lightning::chain::keysinterface::{KeysInterface, Recipient};
@@ -8,7 +9,7 @@ use lightning::ln::channelmanager::{
 };
 
 use lightning_background_processor::{BackgroundProcessor, GossipSync};
-use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler, PeerManager};
+use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler, SimpleArcPeerManager};
 use lightning::onion_message::OnionMessenger;
 use lightning::routing::gossip::{NetworkGraph, P2PGossipSync};
 use lightning::util::config::UserConfig;
@@ -38,6 +39,15 @@ pub(crate) type ChannelManager = SimpleArcChannelManager<
     broadcast::MyBroadcastInterface,
     fee_estimator::MyFeeEstimator,
     logger::MyLogger,
+>;
+
+type PeerManager = SimpleArcPeerManager<
+	SocketDescriptor,
+	chain_monitor::ChainMonitor,
+    broadcast::MyBroadcastInterface,
+    fee_estimator::MyFeeEstimator,
+	dyn chain::Access + Send + Sync,
+	logger::MyLogger,
 >;
 
 fn read_network(
@@ -120,7 +130,7 @@ pub async fn start_node() {
             chain_monitor.clone(),
             broadcaster_interface.clone(),
             logger.clone(),
-            keys_manager,
+            keys_manager.clone(),
             user_config,
             chain_params,
         );
@@ -214,13 +224,14 @@ pub async fn start_node() {
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs();
+
     let peer_manager = Arc::new(PeerManager::new(
         lightning_msg_handler,
         keys_manager.get_node_secret(Recipient::Node).unwrap(),
         current_time.try_into().unwrap(),
         &ephemeral_bytes,
         logger,
-        &ignoring_custom_msg_handler,
+        ignoring_custom_msg_handler,
     ));
 
     // let chain_tip = if restarting_node {
