@@ -1,4 +1,5 @@
 use bitcoin::blockdata::constants::genesis_block;
+use lightning_net_tokio;
 use lightning_net_tokio::SocketDescriptor;
 
 use bitcoin::network::constants::Network;
@@ -8,12 +9,12 @@ use lightning::ln::channelmanager::{
     ChainParameters, ChannelManagerReadArgs, SimpleArcChannelManager,
 };
 
-use lightning_background_processor::{BackgroundProcessor, GossipSync};
 use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler, SimpleArcPeerManager};
 use lightning::onion_message::OnionMessenger;
 use lightning::routing::gossip::{NetworkGraph, P2PGossipSync};
 use lightning::util::config::UserConfig;
 use lightning::util::ser::ReadableArgs;
+use lightning_background_processor::{BackgroundProcessor, GossipSync};
 use lightning_block_sync::init;
 use lightning_block_sync::poll;
 use lightning_block_sync::UnboundedCache;
@@ -21,6 +22,7 @@ use std::convert::TryInto;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::SystemTime;
 
@@ -31,8 +33,9 @@ pub mod chain_monitor;
 pub mod fee_estimator;
 pub mod keys_manager;
 pub mod logger;
+pub mod networking;
 pub mod persister;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 
 pub(crate) type ChannelManager = SimpleArcChannelManager<
     chain_monitor::ChainMonitor,
@@ -42,12 +45,12 @@ pub(crate) type ChannelManager = SimpleArcChannelManager<
 >;
 
 type PeerManager = SimpleArcPeerManager<
-	SocketDescriptor,
-	chain_monitor::ChainMonitor,
+    SocketDescriptor,
+    chain_monitor::ChainMonitor,
     broadcast::MyBroadcastInterface,
     fee_estimator::MyFeeEstimator,
-	dyn chain::Access + Send + Sync,
-	logger::MyLogger,
+    dyn chain::Access + Send + Sync,
+    logger::MyLogger,
 >;
 
 fn read_network(
@@ -225,14 +228,39 @@ pub async fn start_node() {
         .unwrap()
         .as_secs();
 
-    let peer_manager = Arc::new(PeerManager::new(
+    let peer_manager: Arc<PeerManager> = Arc::new(PeerManager::new(
         lightning_msg_handler,
         keys_manager.get_node_secret(Recipient::Node).unwrap(),
         current_time.try_into().unwrap(),
         &ephemeral_bytes,
-        logger,
+        logger.clone(),
         ignoring_custom_msg_handler,
     ));
+
+    // Networking step 13
+    let peer_manager_connection_handler = peer_manager.clone();
+    let listen_port = 9735;
+    let stop_listen_connect = Arc::new(AtomicBool::new(false));
+    let stop_listen = Arc::clone(&stop_listen_connect);
+    tokio::spawn(async move {
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", listen_port))
+            .await
+            .unwrap();
+        loop {
+            let peer_mgr = peer_manager_connection_handler.clone();
+            let tcp_stream = listener.accept().await.unwrap().0;
+            if stop_listen.load(Ordering::Acquire) {
+                return;
+            }
+            tokio::spawn(async move {
+                lightning_net_tokio::setup_inbound(
+                    peer_mgr.clone(),
+                    tcp_stream.into_std().unwrap(),
+                )
+                .await;
+            });
+        }
+    });
 
     // let chain_tip = if restarting_node {
     //     let mut chain_listeners = vec![(
