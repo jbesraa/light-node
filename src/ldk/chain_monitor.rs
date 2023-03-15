@@ -15,19 +15,23 @@ pub type ChainMonitor = chainmonitor::ChainMonitor<
     Arc<FilesystemPersister>,
 >;
 
-pub fn new(
-    broadcaster_interface: Arc<dyn BroadcasterInterface>,
-    logger: Arc<dyn Logger>,
-    fee_estimator: Arc<dyn FeeEstimator>,
-    persister: Arc<FilesystemPersister>,
-) -> ChainMonitor {
-    let monitor: ChainMonitor = chainmonitor::ChainMonitor::new(
-        None,
-        broadcaster_interface.clone(),
-        logger.clone(),
-        fee_estimator.clone(),
-        persister.clone(),
-    );
+type Type = ChainMonitor;
 
-    monitor
+impl Type {
+    pub fn new(
+        broadcaster_interface: Arc<dyn BroadcasterInterface>,
+        logger: Arc<dyn Logger>,
+        fee_estimator: Arc<dyn FeeEstimator>,
+        persister: Arc<FilesystemPersister>,
+    ) -> ChainMonitor {
+        let monitor: ChainMonitor = chainmonitor::ChainMonitor::new(
+            None,
+            broadcaster_interface.clone(),
+            logger.clone(),
+            fee_estimator.clone(),
+            persister.clone(),
+        );
+
+        monitor
+    }
 }

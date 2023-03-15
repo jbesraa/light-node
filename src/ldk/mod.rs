@@ -3,8 +3,8 @@ use lightning_net_tokio;
 use lightning_net_tokio::SocketDescriptor;
 
 use bitcoin::network::constants::Network;
-use lightning::chain::keysinterface::{KeysInterface, Recipient};
-use lightning::chain::{self, ChannelMonitorUpdateStatus, Watch};
+use lightning::chain::keysinterface::{InMemorySigner, KeysInterface, Recipient};
+use lightning::chain::{self, chainmonitor, ChannelMonitorUpdateStatus, Filter, Watch};
 use lightning::ln::channelmanager::{
     ChainParameters, ChannelManagerReadArgs, SimpleArcChannelManager,
 };
@@ -18,6 +18,7 @@ use lightning_background_processor::{BackgroundProcessor, GossipSync};
 use lightning_block_sync::init;
 use lightning_block_sync::poll;
 use lightning_block_sync::UnboundedCache;
+use lightning_persister::FilesystemPersister;
 use std::convert::TryInto;
 use std::fs::File;
 use std::io::BufReader;
@@ -27,28 +28,36 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 pub mod block_sync;
-pub mod broadcast;
+// pub mod broadcast;
 use bitcoin::BlockHash;
-pub mod chain_monitor;
-pub mod fee_estimator;
+// pub mod chain_monitor;
+pub mod core;
 pub mod keys_manager;
 pub mod logger;
-pub mod networking;
 pub mod persister;
 use rand::Rng;
 
+pub type ChainMonitor = chainmonitor::ChainMonitor<
+    InMemorySigner,
+    Arc<dyn Filter + Send + Sync>,
+    Arc<core::CoreLDK>,
+    Arc<core::CoreLDK>,
+    Arc<logger::MyLogger>,
+    Arc<FilesystemPersister>,
+>;
+
 pub(crate) type ChannelManager = SimpleArcChannelManager<
-    chain_monitor::ChainMonitor,
-    broadcast::MyBroadcastInterface,
-    fee_estimator::MyFeeEstimator,
+    ChainMonitor,
+    core::CoreLDK, // broadcast
+    core::CoreLDK, // fee estimate
     logger::MyLogger,
 >;
 
 type PeerManager = SimpleArcPeerManager<
     SocketDescriptor,
-    chain_monitor::ChainMonitor,
-    broadcast::MyBroadcastInterface,
-    fee_estimator::MyFeeEstimator,
+    ChainMonitor,
+    core::CoreLDK, // broadcast
+    core::CoreLDK, //fee estimate
     dyn chain::Access + Send + Sync,
     logger::MyLogger,
 >;
@@ -68,17 +77,34 @@ fn read_network(
 
 pub async fn start_node() {
     let ldk_data_dir = format!("{}/.ldk", ".");
-    let fee_estimator = Arc::new(fee_estimator::MyFeeEstimator::default()); // 1
-    let logger = Arc::new(logger::MyLogger()); // 2
-    let broadcaster_interface = Arc::new(broadcast::MyBroadcastInterface::new().await.unwrap()); // 3
+    let handle = tokio::runtime::Handle::current();
+    let core_ldk: Arc<core::CoreLDK> = match core::CoreLDK::new(handle).await {
+        Ok(client) => Arc::new(client),
+        Err(e) => {
+            println!("FAILED TO START CORELDK: {}", e);
+            return;
+        }
+    };
+    let fee_estimator = core_ldk.clone();
+    let logger = Arc::new(logger::MyLogger {});
+    let broadcaster_interface = core_ldk.clone(); // 3
     let keys_manager = Arc::new(keys_manager::new(&ldk_data_dir)); // 6
     let persister = Arc::new(persister::persister(&ldk_data_dir)); // 4
-    let chain_monitor: Arc<chain_monitor::ChainMonitor> = Arc::new(chain_monitor::new(
+
+    let chain_monitor: Arc<ChainMonitor> = Arc::new(chainmonitor::ChainMonitor::new(
+        None,
         broadcaster_interface.clone(),
         logger.clone(),
         fee_estimator.clone(),
         persister.clone(),
-    )); //5
+    ));
+
+    // let chain_monitor: Arc<chain_monitor::ChainMonitor> = Arc::new(chain_monitor::new(
+    //     broadcaster_interface.clone(),
+    //     logger.clone(),
+    //     fee_estimator.clone(),
+    //     persister.clone(),
+    // )); //5
 
     // Start step 7: Read ChannelMonitor state from Disk
     let mut channel_monitors = persister
@@ -126,7 +152,7 @@ pub async fn start_node() {
         // let best_chain_height = // insert the height corresponding to best_blockhash
         let chain_params = ChainParameters {
             network: Network::Regtest, // substitute this with your network
-            best_block: best_block,
+            best_block,
         };
         let fresh_channel_manager = ChannelManager::new(
             fee_estimator.clone(),
@@ -245,7 +271,7 @@ pub async fn start_node() {
     tokio::spawn(async move {
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", listen_port))
             .await
-            .unwrap();
+            .expect("Hey. im down");
         loop {
             let peer_mgr = peer_manager_connection_handler.clone();
             let tcp_stream = listener.accept().await.unwrap().0;
@@ -261,43 +287,4 @@ pub async fn start_node() {
             });
         }
     });
-
-    // let chain_tip = if restarting_node {
-    //     let mut chain_listeners = vec![(
-    //         channel_manager_blockhash,
-    //         &channel_manager as &(dyn chain::Listen + Send + Sync),
-    //     )];
-
-    //     for (blockhash, channel_monitor) in channel_monitors.drain(..) {
-    //         let outpoint = channel_monitor.get_funding_txo().0;
-    //         chain_listener_channel_monitors.push((
-    //             blockhash,
-    //             (
-    //                 channel_monitor,
-    //                 broadcaster_interface.clone(),
-    //                 fee_estimator.clone(),
-    //                 logger.clone(),
-    //             ),
-    //             outpoint,
-    //         ));
-    //     }
-
-    //     for monitor_listener_info in chain_listener_channel_monitors.iter_mut() {
-    //         chain_listeners.push((
-    //             monitor_listener_info.0,
-    //             &monitor_listener_info.1 as &(dyn chain::Listen + Send + Sync),
-    //         ));
-    //     }
-
-    //     init::synchronize_listeners(
-    //         block_source.as_ref(),
-    //         Network::Regtest,
-    //         &mut cache,
-    //         chain_listeners,
-    //     )
-    //     .await
-    //     .unwrap()
-    // } else {
-    //     polled_chain_tip
-    // };
 }

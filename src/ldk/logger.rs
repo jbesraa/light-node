@@ -1,6 +1,8 @@
 use lightning::util::logger::{Logger, Record};
 
-pub struct MyLogger();
+pub struct MyLogger {
+    // data_dir: String,
+}
 
 impl Logger for MyLogger {
     fn log(&self, record: &Record) {
