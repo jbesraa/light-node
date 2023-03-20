@@ -1,10 +1,12 @@
 use base64;
+use bitcoin::BlockHash;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode;
 use bitcoin::hash_types::Txid;
 use lightning::chain::chaininterface::BroadcasterInterface;
 use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
 use lightning::util::logger::{Logger, Record};
+use lightning_block_sync::{BlockSource, AsyncBlockSourceResult, BlockHeaderData, BlockData};
 use lightning_block_sync::http::HttpEndpoint;
 use lightning_block_sync::rpc::RpcClient;
 use serde_json;
@@ -132,4 +134,23 @@ impl FeeEstimator for CoreLDK {
                 .load(Ordering::Acquire),
         }
     }
+}
+
+
+impl BlockSource for CoreLDK {
+	fn get_header<'a>(
+		&'a self, header_hash: &'a BlockHash, height_hint: Option<u32>,
+	) -> AsyncBlockSourceResult<'a, BlockHeaderData> {
+		Box::pin(async move { self.bitcoind_rpc_client.get_header(header_hash, height_hint).await })
+	}
+
+	fn get_block<'a>(
+		&'a self, header_hash: &'a BlockHash,
+	) -> AsyncBlockSourceResult<'a, BlockData> {
+		Box::pin(async move { self.bitcoind_rpc_client.get_block(header_hash).await })
+	}
+
+	fn get_best_block<'a>(&'a self) -> AsyncBlockSourceResult<(BlockHash, Option<u32>)> {
+		Box::pin(async move { self.bitcoind_rpc_client.get_best_block().await })
+	}
 }
