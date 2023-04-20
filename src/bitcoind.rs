@@ -1,6 +1,4 @@
 #![allow(unused_imports)]
-use bitcoin::hash_types::{BlockHash, Txid};
-use lightning_block_sync::{AsyncBlockSourceResult, BlockData, BlockHeaderData, BlockSource};
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::{DerivationPath, KeySource};
 use bdk::bitcoin::Amount;
@@ -20,7 +18,9 @@ use bdk::sled;
 use bdk::wallet::wallet_name_from_descriptor;
 use bdk::wallet::{signer::SignOptions, AddressIndex};
 use bdk::Wallet;
+use bitcoin::hash_types::{BlockHash, Txid};
 use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
+use lightning_block_sync::{AsyncBlockSourceResult, BlockData, BlockHeaderData, BlockSource};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -92,7 +92,6 @@ pub fn generate_to_address(
 //     core_rpc.get_header().unwrap();
 // }
 
-
 // impl BlockSource for BitcoindClient {
 // 	fn get_header<'a>(
 // 		&'a self, header_hash: &'a BlockHash, height_hint: Option<u32>,
@@ -110,4 +109,3 @@ pub fn generate_to_address(
 // 		Box::pin(async move { self.bitcoind_rpc_client.get_best_block().await })
 // 	}
 // }
-

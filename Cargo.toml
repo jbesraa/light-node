@@ -10,13 +10,13 @@ bdk = {version = "0.26.0", features=["sqlite", "keys-bip39", "rpc",
 "futures",  "key-value-db", "bitcoincore-rpc", "compact_filters"] }
 dirs-next = "2.0.0"
 
-lightning = { version = "0.0.113", features = ["max_level_trace"] }
-lightning-block-sync = { version = "0.0.113", features = [ "rpc-client" ] }
-lightning-invoice = { version = "0.21" }
-lightning-net-tokio = { version = "0.0.113" }
-lightning-persister = { version = "0.0.113" }
-lightning-background-processor = { version = "0.0.113" }
-lightning-rapid-gossip-sync = { version = "0.0.113" }
+lightning = { version = "0.0.114", features = ["max_level_trace"] }
+lightning-block-sync = { version = "0.0.114", features = [ "rpc-client" ] }
+lightning-invoice = { version = "0.22" }
+lightning-net-tokio = { version = "0.0.114" }
+lightning-persister = { version = "0.0.114" }
+lightning-background-processor = { version = "0.0.114" }
+lightning-rapid-gossip-sync = { version = "0.0.114" }
 
 base64 = "0.13.0"
 bitcoin = "0.29.0"

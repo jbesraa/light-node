@@ -1,5 +1,8 @@
 pub mod bdk_integration;
 pub mod bitcoind;
+pub mod cli;
+pub mod disk;
+pub mod hex_utils;
 pub mod ldk;
 
 fn main() {

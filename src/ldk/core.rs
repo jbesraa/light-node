@@ -1,19 +1,24 @@
+use crate::ldk::convert::FeeResponse;
 use base64;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode;
 use bitcoin::hash_types::Txid;
-use bitcoin::{BlockHash, Address};
+use bitcoin::{Address, BlockHash};
 use lightning::chain::chaininterface::BroadcasterInterface;
 use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
-use lightning::util::logger::{Logger, Record};
+use lightning::routing::utxo::{UtxoLookup, UtxoResult};
 use lightning_block_sync::http::HttpEndpoint;
 use lightning_block_sync::rpc::RpcClient;
 use lightning_block_sync::{AsyncBlockSourceResult, BlockData, BlockHeaderData, BlockSource};
 use serde_json;
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::runtime::Handle;
+
+use super::convert::{BlockchainInfo, FundedTx, NewAddress, RawTx, SignedTx};
 
 pub struct CoreLDK {
     bitcoind_rpc_client: Arc<RpcClient>,
@@ -303,5 +308,12 @@ impl BlockSource for CoreLDK {
 
     fn get_best_block<'a>(&'a self) -> AsyncBlockSourceResult<(BlockHash, Option<u32>)> {
         Box::pin(async move { self.bitcoind_rpc_client.get_best_block().await })
+    }
+}
+
+impl UtxoLookup for CoreLDK {
+    fn get_utxo(&self, _genesis_hash: &BlockHash, _short_channel_id: u64) -> UtxoResult {
+        // P2PGossipSync takes None for a UtxoLookup, so this will never be called.
+        todo!();
     }
 }

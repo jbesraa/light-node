@@ -5,26 +5,26 @@ use bitcoin_bech32::WitnessProgram;
 use lightning::chain::chaininterface::BroadcasterInterface;
 use lightning::chain::chaininterface::ConfirmationTarget;
 use lightning::chain::chaininterface::FeeEstimator;
+use lightning::chain::keysinterface::EntropySource;
 use lightning::ln::{PaymentHash, PaymentPreimage, PaymentSecret};
+use lightning::onion_message::SimpleArcOnionMessenger;
 use lightning::routing::router::DefaultRouter;
 use lightning::routing::scoring::ProbabilisticScorer;
 use lightning::routing::scoring::ProbabilisticScoringParameters;
 use lightning::util::events::{Event, PaymentPurpose};
-use lightning_invoice::payment;
-use lightning_invoice::payment::InvoicePayer;
 use lightning_net_tokio;
 use lightning_net_tokio::SocketDescriptor;
+use lightning_rapid_gossip_sync::RapidGossipSync;
 use rand::{thread_rng, Rng};
 
 use bitcoin::network::constants::Network;
-use lightning::chain::keysinterface::{InMemorySigner, KeysInterface, KeysManager, Recipient};
+use lightning::chain::keysinterface::{InMemorySigner, KeysManager};
 use lightning::chain::{self, chainmonitor, ChannelMonitorUpdateStatus, Filter, Watch};
 use lightning::ln::channelmanager::{
     ChainParameters, ChannelManagerReadArgs, SimpleArcChannelManager,
 };
 
 use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler, SimpleArcPeerManager};
-use lightning::onion_message::OnionMessenger;
 use lightning::routing::gossip::{NodeId, P2PGossipSync};
 use lightning::util::config::UserConfig;
 use lightning::util::ser::ReadableArgs;
@@ -47,17 +47,18 @@ pub mod block_sync;
 // pub mod broadcast;
 use bitcoin::{BlockHash, Transaction};
 
-use self::disk::FilesystemLogger;
+use crate::disk::FilesystemLogger;
+use crate::hex_utils;
+
 // pub mod chain_monitor;
+pub mod convert;
 pub mod core;
-pub mod disk;
-pub mod hex_utils;
 pub mod keys_manager;
 pub mod logger;
 pub mod persister;
 // use rand::Rng;
 
-type NetworkGraph = lightning::routing::gossip::NetworkGraph<Arc<FilesystemLogger>>;
+pub type NetworkGraph = lightning::routing::gossip::NetworkGraph<Arc<FilesystemLogger>>;
 
 async fn handle_ldk_events(
     channel_manager: &Arc<ChannelManager>,
@@ -354,23 +355,25 @@ async fn handle_ldk_events(
     }
 }
 
-enum HTLCStatus {
+pub enum HTLCStatus {
     Pending,
     Succeeded,
     Failed,
 }
 
 #[derive(Debug)]
-struct MillisatAmount(Option<u64>);
+pub struct MillisatAmount(pub Option<u64>);
 
-pub(crate) struct PaymentInfo {
-    preimage: Option<PaymentPreimage>,
-    secret: Option<PaymentSecret>,
-    status: HTLCStatus,
-    amt_msat: MillisatAmount,
+pub struct PaymentInfo {
+    pub preimage: Option<PaymentPreimage>,
+    pub secret: Option<PaymentSecret>,
+    pub status: HTLCStatus,
+    pub amt_msat: MillisatAmount,
 }
 
-type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
+pub type OnionMessenger = SimpleArcOnionMessenger<FilesystemLogger>;
+
+pub type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
 
 pub type ChainMonitor = chainmonitor::ChainMonitor<
     InMemorySigner,
@@ -388,12 +391,12 @@ pub(crate) type ChannelManager = SimpleArcChannelManager<
     FilesystemLogger,
 >;
 
-type PeerManager = SimpleArcPeerManager<
+pub type PeerManager = SimpleArcPeerManager<
     SocketDescriptor,
     ChainMonitor,
-    core::CoreLDK, // broadcast
-    core::CoreLDK, //fee estimate
-    dyn chain::Access + Send + Sync,
+    core::CoreLDK,
+    core::CoreLDK,
+    core::CoreLDK,
     FilesystemLogger,
 >;
 
@@ -407,7 +410,7 @@ fn read_network(
             return graph;
         }
     }
-    NetworkGraph::new(genesis_hash, logger)
+    NetworkGraph::new(Network::Regtest, logger)
 }
 
 pub async fn start_node() {
@@ -445,13 +448,42 @@ pub async fn start_node() {
 
     // Start step 7: Read ChannelMonitor state from Disk
     let mut channel_monitors = persister
-        .read_channelmonitors(keys_manager.clone())
+        .read_channelmonitors(keys_manager.clone(), keys_manager.clone())
         .unwrap();
     // End step 7
 
     // Start step 8
     let user_config = UserConfig::default();
 
+    let genesis = genesis_block(Network::Regtest).header.block_hash();
+    let network_graph_path = format!("{}/network_graph", ldk_data_dir.clone());
+    let network_graph = Arc::new(read_network(
+        Path::new(&network_graph_path),
+        genesis,
+        logger.clone(),
+    ));
+
+    let gossip_sync = Arc::new(P2PGossipSync::new(
+        Arc::clone(&network_graph),
+        None::<Arc<core::CoreLDK>>,
+        logger.clone(),
+    ));
+
+    // Step 16. Initialize the ProbabilisticScorer
+    let scorer_path = format!("{}/scorer", ldk_data_dir.clone());
+    let params = ProbabilisticScoringParameters::default();
+    let scorer = Arc::new(Mutex::new(ProbabilisticScorer::new(
+        params,
+        Arc::clone(&network_graph),
+        Arc::clone(&logger),
+    )));
+
+    let router = Arc::new(DefaultRouter::new(
+        Arc::clone(&network_graph),
+        Arc::clone(&logger),
+        keys_manager.get_secure_random_bytes(),
+        Arc::clone(&scorer),
+    ));
     /* RESTARTING */
 
     let (channel_manager_blockhash, mut channel_manager) = {
@@ -465,9 +497,12 @@ pub async fn start_node() {
         }
         let read_args = ChannelManagerReadArgs::new(
             keys_manager.clone(),
+            keys_manager.clone(),
+            keys_manager.clone(),
             fee_estimator.clone(),
             chain_monitor.clone(),
             broadcaster_interface.clone(),
+            router.clone(),
             logger.clone(),
             user_config,
             channel_monitor_mut_references,
@@ -495,7 +530,10 @@ pub async fn start_node() {
             fee_estimator.clone(),
             chain_monitor.clone(),
             broadcaster_interface.clone(),
+            router.clone(),
             logger.clone(),
+            keys_manager.clone(),
+            keys_manager.clone(),
             keys_manager.clone(),
             user_config,
             chain_params,
@@ -557,24 +595,12 @@ pub async fn start_node() {
         );
     }
 
-    // Step 12: Optional: Initialize the P2PGossipSync
-    let genesis = genesis_block(Network::Regtest).header.block_hash();
-    let network_graph_path = format!("{}/network_graph", ldk_data_dir.clone());
-    let network_graph = Arc::new(read_network(
-        Path::new(&network_graph_path),
-        genesis,
-        logger.clone(),
-    ));
-    let gossip_sync = Arc::new(P2PGossipSync::new(
-        Arc::clone(&network_graph),
-        None::<Arc<dyn chain::Access + Send + Sync>>,
-        logger.clone(),
-    ));
     //
 
     let mut ephemeral_bytes = [0; 32];
     rand::thread_rng().fill_bytes(&mut ephemeral_bytes);
     let onion_messenger = Arc::new(OnionMessenger::new(
+        Arc::clone(&keys_manager),
         Arc::clone(&keys_manager),
         Arc::clone(&logger),
         IgnoringMessageHandler {},
@@ -594,11 +620,11 @@ pub async fn start_node() {
 
     let peer_manager: Arc<PeerManager> = Arc::new(PeerManager::new(
         lightning_msg_handler,
-        keys_manager.get_node_secret(Recipient::Node).unwrap(),
         current_time.try_into().unwrap(),
         &ephemeral_bytes,
         logger.clone(),
         ignoring_custom_msg_handler,
+        Arc::clone(&keys_manager),
     ));
 
     // Networking step 13
@@ -667,31 +693,14 @@ pub async fn start_node() {
             &event,
         ));
     };
-
-    // Step 16. Initialize the ProbabilisticScorer
-    let scorer_path = format!("{}/scorer", ldk_data_dir.clone());
-    let params = ProbabilisticScoringParameters::default();
-    let scorer = Arc::new(Mutex::new(ProbabilisticScorer::new(
-        params,
-        Arc::clone(&network_graph),
-        Arc::clone(&logger),
-    )));
-
     // Step 17. Initialize the InvoicePayer
-    let router = DefaultRouter::new(
-        Arc::clone(&network_graph),
-        Arc::clone(&logger),
-        keys_manager.get_secure_random_bytes(),
-        Arc::clone(&scorer),
-    );
-
-    let invoice_payer = Arc::new(InvoicePayer::new(
-        Arc::clone(&channel_manager),
-        router,
-        Arc::clone(&logger),
-        event_handler,
-        payment::Retry::Attempts(5),
-    ));
+    // let invoice_payer = Arc::new(InvoicePayer::new(
+    //     Arc::clone(&channel_manager),
+    //     router,
+    //     Arc::clone(&logger),
+    //     event_handler,
+    //     Retry::Attempts(5),
+    // ));
 
     // Step 18. Initialize the Persister
     let persister = Arc::new(FilesystemPersister::new(ldk_data_dir.clone()));
@@ -699,10 +708,10 @@ pub async fn start_node() {
     // Step 19. Start Background Processing
     let background_processor = BackgroundProcessor::start(
         persister,
-        invoice_payer.clone(),
+        event_handler,
         Arc::clone(&chain_monitor),
         Arc::clone(&channel_manager),
-        GossipSync::P2P(gossip_sync.clone()),
+        GossipSync::p2p(gossip_sync.clone()),
         Arc::clone(&peer_manager),
         Arc::clone(&logger),
         Some(scorer.clone()),

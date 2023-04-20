@@ -1,4 +1,5 @@
-use crate::{cli, NetworkGraph};
+use crate::cli;
+use crate::ldk::NetworkGraph;
 use bitcoin::secp256k1::PublicKey;
 use chrono::Utc;
 use lightning::routing::scoring::{ProbabilisticScorer, ProbabilisticScoringParameters};
@@ -12,11 +13,11 @@ use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Arc;
 
-pub(crate) struct FilesystemLogger {
+pub struct FilesystemLogger {
     data_dir: String,
 }
 impl FilesystemLogger {
-    pub(crate) fn new(data_dir: String) -> Self {
+    pub fn new(data_dir: String) -> Self {
         let logs_path = format!("{}/logs", data_dir);
         fs::create_dir_all(logs_path.clone()).unwrap();
         Self {
