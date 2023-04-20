@@ -2,9 +2,16 @@ use bitcoin::blockdata::constants::genesis_block;
 use bitcoin::consensus::encode;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin_bech32::WitnessProgram;
+use lightning::chain::chaininterface::BroadcasterInterface;
 use lightning::chain::chaininterface::ConfirmationTarget;
+use lightning::chain::chaininterface::FeeEstimator;
 use lightning::ln::{PaymentHash, PaymentPreimage, PaymentSecret};
+use lightning::routing::router::DefaultRouter;
+use lightning::routing::scoring::ProbabilisticScorer;
+use lightning::routing::scoring::ProbabilisticScoringParameters;
 use lightning::util::events::{Event, PaymentPurpose};
+use lightning_invoice::payment;
+use lightning_invoice::payment::InvoicePayer;
 use lightning_net_tokio;
 use lightning_net_tokio::SocketDescriptor;
 use rand::{thread_rng, Rng};
@@ -30,7 +37,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fs::File;
-use std::io::{self, BufReader};
+use std::io::{self, BufReader, Write};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -39,16 +46,18 @@ use std::time::{Duration, SystemTime};
 pub mod block_sync;
 // pub mod broadcast;
 use bitcoin::{BlockHash, Transaction};
+
+use self::disk::FilesystemLogger;
 // pub mod chain_monitor;
 pub mod core;
+pub mod disk;
 pub mod hex_utils;
 pub mod keys_manager;
 pub mod logger;
 pub mod persister;
-pub mod disk;
 // use rand::Rng;
 
-type NetworkGraph = lightning::routing::gossip::NetworkGraph<Arc<logger::MyLogger>>;
+type NetworkGraph = lightning::routing::gossip::NetworkGraph<Arc<FilesystemLogger>>;
 
 async fn handle_ldk_events(
     channel_manager: &Arc<ChannelManager>,
@@ -185,11 +194,11 @@ async fn handle_ldk_events(
                     payment.preimage = Some(*payment_preimage);
                     payment.status = HTLCStatus::Succeeded;
                     println!(
-                        "\nEVENT: successfully sent payment of {} millisatoshis{} from \
-								 payment hash {:?} with preimage {:?}",
+                        "\nEVENT: successfully sent payment of {:#?} millisatoshis{:#?} from \
+								 payment hash {:#?} with preimage {:#?}",
                         payment.amt_msat,
                         if let Some(fee) = fee_paid_msat {
-                            format!(" (fee {} msat)", fee)
+                            format!(" (fee {:#?} msat)", fee)
                         } else {
                             "".to_string()
                         },
@@ -351,6 +360,7 @@ enum HTLCStatus {
     Failed,
 }
 
+#[derive(Debug)]
 struct MillisatAmount(Option<u64>);
 
 pub(crate) struct PaymentInfo {
@@ -367,7 +377,7 @@ pub type ChainMonitor = chainmonitor::ChainMonitor<
     Arc<dyn Filter + Send + Sync>,
     Arc<core::CoreLDK>,
     Arc<core::CoreLDK>,
-    Arc<logger::MyLogger>,
+    Arc<FilesystemLogger>,
     Arc<FilesystemPersister>,
 >;
 
@@ -375,7 +385,7 @@ pub(crate) type ChannelManager = SimpleArcChannelManager<
     ChainMonitor,
     core::CoreLDK, // broadcast
     core::CoreLDK, // fee estimate
-    logger::MyLogger,
+    FilesystemLogger,
 >;
 
 type PeerManager = SimpleArcPeerManager<
@@ -384,13 +394,13 @@ type PeerManager = SimpleArcPeerManager<
     core::CoreLDK, // broadcast
     core::CoreLDK, //fee estimate
     dyn chain::Access + Send + Sync,
-    logger::MyLogger,
+    FilesystemLogger,
 >;
 
 fn read_network(
     path: &Path,
     genesis_hash: BlockHash,
-    logger: Arc<logger::MyLogger>,
+    logger: Arc<FilesystemLogger>,
 ) -> NetworkGraph {
     if let Ok(file) = File::open(path) {
         if let Ok(graph) = NetworkGraph::read(&mut BufReader::new(file), logger.clone()) {
@@ -411,7 +421,9 @@ pub async fn start_node() {
         }
     };
     let fee_estimator = core_ldk.clone();
-    let logger = Arc::new(logger::MyLogger {});
+
+    let logger = Arc::new(FilesystemLogger::new(ldk_data_dir.clone()));
+    // let logger = Arc::new(FilesystemLogger {});
     let broadcaster_interface = core_ldk.clone(); // 3
     let keys_manager = Arc::new(keys_manager::new(&ldk_data_dir)); // 6
     let persister = Arc::new(persister::persister(&ldk_data_dir)); // 4
@@ -656,11 +668,43 @@ pub async fn start_node() {
         ));
     };
 
-    // Routing ProbabliisticScorer
+    // Step 16. Initialize the ProbabilisticScorer
     let scorer_path = format!("{}/scorer", ldk_data_dir.clone());
-    let scorer = Arc::new(Mutex::new(disk::read_scorer(
-        Path::new(&scorer_path),
+    let params = ProbabilisticScoringParameters::default();
+    let scorer = Arc::new(Mutex::new(ProbabilisticScorer::new(
+        params,
         Arc::clone(&network_graph),
         Arc::clone(&logger),
     )));
+
+    // Step 17. Initialize the InvoicePayer
+    let router = DefaultRouter::new(
+        Arc::clone(&network_graph),
+        Arc::clone(&logger),
+        keys_manager.get_secure_random_bytes(),
+        Arc::clone(&scorer),
+    );
+
+    let invoice_payer = Arc::new(InvoicePayer::new(
+        Arc::clone(&channel_manager),
+        router,
+        Arc::clone(&logger),
+        event_handler,
+        payment::Retry::Attempts(5),
+    ));
+
+    // Step 18. Initialize the Persister
+    let persister = Arc::new(FilesystemPersister::new(ldk_data_dir.clone()));
+
+    // Step 19. Start Background Processing
+    let background_processor = BackgroundProcessor::start(
+        persister,
+        invoice_payer.clone(),
+        Arc::clone(&chain_monitor),
+        Arc::clone(&channel_manager),
+        GossipSync::P2P(gossip_sync.clone()),
+        Arc::clone(&peer_manager),
+        Arc::clone(&logger),
+        Some(scorer.clone()),
+    );
 }

@@ -10,6 +10,7 @@ fn main() {
     // println!("Wallet Network: {:?}", w.network());
     // println!("Wallet Balance: {:?}", w.get_balance().unwrap());
     // println!("Hello, world!");
+    // let a = bitcoind::get_address();
     let w = bitcoind::get_wallets_info();
     let n = bitcoind::get_network_info();
     let i = bitcoind::get_blockchain_info();

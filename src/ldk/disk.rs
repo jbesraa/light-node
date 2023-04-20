@@ -1,6 +1,5 @@
 use crate::{cli, NetworkGraph};
 use bitcoin::secp256k1::PublicKey;
-use bitcoin::BlockHash;
 use chrono::Utc;
 use lightning::routing::scoring::{ProbabilisticScorer, ProbabilisticScoringParameters};
 use lightning::util::logger::{Logger, Record};
