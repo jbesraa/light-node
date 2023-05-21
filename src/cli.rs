@@ -1,10 +1,15 @@
-use crate::disk;
-use crate::hex_utils;
-use crate::ldk::OnionMessenger;
-use crate::ldk::{
-    ChannelManager, HTLCStatus, MillisatAmount, NetworkGraph, PaymentInfo, PaymentInfoStorage,
-    PeerManager,
-};
+use crate::types::ChannelManager;
+use crate::types::HTLCStatus;
+use crate::types::MillisatAmount;
+use crate::types::NetworkGraph;
+use crate::types::OnionMessenger;
+use crate::types::PaymentInfo;
+use crate::types::PaymentInfoStorage;
+use crate::types::PeerManager;
+use crate::utils::disk;
+use crate::utils::hex::hex_str;
+use crate::utils::hex::to_compressed_pubkey;
+use crate::utils::hex::to_vec;
 use bitcoin::hashes::sha256::Hash as Sha256;
 use bitcoin::hashes::Hash;
 use bitcoin::network::constants::Network;
@@ -26,11 +31,11 @@ use std::env;
 use std::io;
 use std::io::Write;
 use std::net::{SocketAddr, ToSocketAddrs};
-use std::ops::Deref;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
+use std::ops::Deref;
 
 pub(crate) struct LdkUserInfo {
     pub(crate) bitcoind_rpc_username: String,
@@ -169,7 +174,7 @@ pub(crate) async fn poll_for_user_input(
                 }
                 "keysend" => {
                     let dest_pubkey = match words.next() {
-                        Some(dest) => match hex_utils::to_compressed_pubkey(dest) {
+                        Some(dest) => match to_compressed_pubkey(dest) {
                             Some(pk) => pk,
                             None => {
                                 println!("ERROR: couldn't parse destination pubkey");
@@ -295,7 +300,7 @@ pub(crate) async fn poll_for_user_input(
                         println!("ERROR: closechannel requires a channel ID: `closechannel <channel_id> <peer_pubkey>`");
                         continue;
                     }
-                    let channel_id_vec = hex_utils::to_vec(channel_id_str.unwrap());
+                    let channel_id_vec = to_vec(channel_id_str.unwrap());
                     if channel_id_vec.is_none() || channel_id_vec.as_ref().unwrap().len() != 32 {
                         println!("ERROR: couldn't parse channel_id");
                         continue;
@@ -308,7 +313,7 @@ pub(crate) async fn poll_for_user_input(
                         println!("ERROR: closechannel requires a peer pubkey: `closechannel <channel_id> <peer_pubkey>`");
                         continue;
                     }
-                    let peer_pubkey_vec = match hex_utils::to_vec(peer_pubkey_str.unwrap()) {
+                    let peer_pubkey_vec = match to_vec(peer_pubkey_str.unwrap()) {
                         Some(peer_pubkey_vec) => peer_pubkey_vec,
                         None => {
                             println!("ERROR: couldn't parse peer_pubkey");
@@ -331,7 +336,7 @@ pub(crate) async fn poll_for_user_input(
                         println!("ERROR: forceclosechannel requires a channel ID: `forceclosechannel <channel_id> <peer_pubkey>`");
                         continue;
                     }
-                    let channel_id_vec = hex_utils::to_vec(channel_id_str.unwrap());
+                    let channel_id_vec = to_vec(channel_id_str.unwrap());
                     if channel_id_vec.is_none() || channel_id_vec.as_ref().unwrap().len() != 32 {
                         println!("ERROR: couldn't parse channel_id");
                         continue;
@@ -344,7 +349,7 @@ pub(crate) async fn poll_for_user_input(
                         println!("ERROR: forceclosechannel requires a peer pubkey: `forceclosechannel <channel_id> <peer_pubkey>`");
                         continue;
                     }
-                    let peer_pubkey_vec = match hex_utils::to_vec(peer_pubkey_str.unwrap()) {
+                    let peer_pubkey_vec = match to_vec(peer_pubkey_str.unwrap()) {
                         Some(peer_pubkey_vec) => peer_pubkey_vec,
                         None => {
                             println!("ERROR: couldn't parse peer_pubkey");
@@ -388,7 +393,7 @@ pub(crate) async fn poll_for_user_input(
                     let mut node_pks = Vec::new();
                     let mut errored = false;
                     for pk_str in path_pks_str.unwrap().split(",") {
-                        let node_pubkey_vec = match hex_utils::to_vec(pk_str) {
+                        let node_pubkey_vec = match to_vec(pk_str) {
                             Some(peer_pubkey_vec) => peer_pubkey_vec,
                             None => {
                                 println!("ERROR: couldn't parse peer_pubkey");
@@ -416,7 +421,7 @@ pub(crate) async fn poll_for_user_input(
                             continue;
                         }
                     };
-                    let data = match words.next().map(|s| hex_utils::to_vec(s)) {
+                    let data = match words.next().map(|s| to_vec(s)) {
                         Some(Some(data)) => data,
                         _ => {
                             println!("Need a hex data string");
@@ -504,7 +509,7 @@ fn list_channels(channel_manager: &Arc<ChannelManager>, network_graph: &Arc<Netw
         println!("\t{{");
         println!(
             "\t\tchannel_id: {},",
-            hex_utils::hex_str(&chan_info.channel_id[..])
+            hex_str(&chan_info.channel_id[..])
         );
         if let Some(funding_txo) = chan_info.funding_txo {
             println!("\t\tfunding_txid: {},", funding_txo.txid);
@@ -512,7 +517,7 @@ fn list_channels(channel_manager: &Arc<ChannelManager>, network_graph: &Arc<Netw
 
         println!(
             "\t\tpeer_pubkey: {},",
-            hex_utils::hex_str(&chan_info.counterparty.node_id.serialize())
+            hex_str(&chan_info.counterparty.node_id.serialize())
         );
         if let Some(node_info) = network_graph
             .read_only()
@@ -558,7 +563,7 @@ fn list_payments(inbound_payments: PaymentInfoStorage, outbound_payments: Paymen
         println!("");
         println!("\t{{");
         println!("\t\tamount_millisatoshis: {:?},", payment_info.amt_msat);
-        println!("\t\tpayment_hash: {},", hex_utils::hex_str(&payment_hash.0));
+        println!("\t\tpayment_hash: {},", hex_str(&payment_hash.0));
         println!("\t\thtlc_direction: inbound,");
         println!(
             "\t\thtlc_status: {},",
@@ -576,7 +581,7 @@ fn list_payments(inbound_payments: PaymentInfoStorage, outbound_payments: Paymen
         println!("");
         println!("\t{{");
         println!("\t\tamount_millisatoshis: {:?},", payment_info.amt_msat);
-        println!("\t\tpayment_hash: {},", hex_utils::hex_str(&payment_hash.0));
+        println!("\t\tpayment_hash: {},", hex_str(&payment_hash.0));
         println!("\t\thtlc_direction: outbound,");
         println!(
             "\t\thtlc_status: {},",
@@ -877,7 +882,7 @@ pub(crate) fn parse_peer_info(
         ));
     }
 
-    let pubkey = hex_utils::to_compressed_pubkey(pubkey.unwrap());
+    let pubkey = to_compressed_pubkey(pubkey.unwrap());
     if pubkey.is_none() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::Other,

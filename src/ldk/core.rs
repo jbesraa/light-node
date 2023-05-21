@@ -1,4 +1,4 @@
-use crate::ldk::convert::FeeResponse;
+use crate::utils::convert::{BlockchainInfo, FeeResponse, FundedTx, NewAddress, RawTx, SignedTx};
 use base64;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode;
@@ -18,8 +18,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::runtime::Handle;
 
-use super::convert::{BlockchainInfo, FundedTx, NewAddress, RawTx, SignedTx};
-
 pub struct CoreLDK {
     bitcoind_rpc_client: Arc<RpcClient>,
     host: String,
@@ -30,46 +28,23 @@ pub struct CoreLDK {
     fees: Arc<HashMap<Target, AtomicU32>>,
 }
 
-fn default_rpc_details() -> (
-    std::string::String,
-    u16,
-    std::string::String,
-    std::string::String,
-    HttpEndpoint,
-    std::string::String,
-) {
-    let host = "http://127.0.0.1".to_string();
-    let port = 18443;
-    let rpc_user: String = "admin".to_string();
-    let rpc_password: String = "password".to_string();
-    let http_endpoint = HttpEndpoint::for_host(host.clone()).with_port(port);
-    let rpc_credentials = base64::encode(format!("{}:{}", rpc_user, rpc_password));
-    return (
-        host,
-        port,
-        rpc_user,
-        rpc_password,
-        http_endpoint,
-        rpc_credentials,
-    );
-}
-
 impl CoreLDK {
     pub async fn new(handle: Handle) -> std::io::Result<Self> {
-        let (host, port, rpc_user, rpc_password, http_endpoint, rpc_credentials) =
-            default_rpc_details();
-        let bitcoind_rpc_client = RpcClient::new(&rpc_credentials, http_endpoint)?;
-        let fees = default_fees();
-        let client = Self {
-            bitcoind_rpc_client: Arc::new(bitcoind_rpc_client),
+        let host = "http://127.0.0.1".to_string();
+        let rpc_user: String = "admin".to_string();
+        let port = 18443;
+        let rpc_password: String = "password".to_string();
+        let http_endpoint = HttpEndpoint::for_host(host.clone()).with_port(port);
+        let rpc_credentials = base64::encode(format!("{}:{}", rpc_user, rpc_password));
+        Ok(Self {
+            bitcoind_rpc_client: Arc::new(RpcClient::new(&rpc_credentials, http_endpoint)?),
             host,
             port,
             rpc_user,
             rpc_password,
             handle: handle.clone(),
-            fees: Arc::new(fees),
-        };
-        Ok(client)
+            fees: Arc::new(default_fees()),
+        })
     }
 
     fn poll_for_fee_estimates(
