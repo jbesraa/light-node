@@ -1,47 +1,49 @@
+use crate::types::{
+    ChainMonitor, ChannelManager, NetworkGraph, OnionMessenger, PaymentInfoStorage, PeerManager,
+};
 use bitcoin::blockdata::constants::genesis_block;
+use bitcoin::network::constants::Network;
+use bitcoin::BlockHash;
 use ldk::core::CoreLDK;
 use ldk::event_handler::handle_ldk_events;
 use lightning::chain::keysinterface::EntropySource;
+use lightning::chain::{self, chainmonitor, ChannelMonitorUpdateStatus, Watch};
+use lightning::ln::channelmanager::{ChainParameters, ChannelManagerReadArgs};
+use lightning::ln::msgs::NetAddress;
+use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler};
+use lightning::routing::gossip::P2PGossipSync;
 use lightning::routing::router::DefaultRouter;
 use lightning::routing::scoring::ProbabilisticScorer;
 use lightning::routing::scoring::ProbabilisticScoringParameters;
+use lightning::util::config::UserConfig;
 use lightning::util::events::Event;
+use lightning::util::ser::ReadableArgs;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_background_processor::GossipSync;
-use lightning_net_tokio;
-use lightning_persister::FilesystemPersister;
-use rand::Rng;
-use bitcoin::network::constants::Network;
-use lightning::chain::{self, chainmonitor, ChannelMonitorUpdateStatus, Watch};
-use lightning::ln::channelmanager::{ChainParameters, ChannelManagerReadArgs};
-use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler};
-use lightning::routing::gossip::P2PGossipSync;
-use lightning::util::config::UserConfig;
-use lightning::util::ser::ReadableArgs;
 use lightning_block_sync::poll;
 use lightning_block_sync::UnboundedCache;
 use lightning_block_sync::{init, SpvClient};
-use utils::disk::FilesystemLogger;
+use lightning_net_tokio;
+use lightning_persister::FilesystemPersister;
+use rand::Rng;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fs::File;
 use std::io::BufReader;
+use std::net::IpAddr;
 use std::path::Path;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
-use bitcoin::BlockHash;
-use crate::types::{
-    ChainMonitor, ChannelManager, NetworkGraph, OnionMessenger, PaymentInfoStorage, PeerManager,
-};
+use utils::disk::FilesystemLogger;
+use utils::{disk, sweep};
 
 pub mod cli;
-pub mod utils;
 pub mod ldk;
 pub mod types;
+pub mod utils;
 pub mod wallet;
-
-
 
 fn read_network(
     path: &Path,
@@ -58,6 +60,7 @@ fn read_network(
 
 pub async fn start_node() {
     let ldk_data_dir = format!("{}/.ldk", ".");
+    let port = 9735;
     let handle = tokio::runtime::Handle::current();
     let core_ldk: Arc<CoreLDK> = match CoreLDK::new(handle).await {
         Ok(client) => Arc::new(client),
@@ -333,6 +336,7 @@ pub async fn start_node() {
     let persister = Arc::new(FilesystemPersister::new(ldk_data_dir.clone()));
 
     // Step 19. Start Background Processing
+    let (bp_exit, bp_exit_check) = tokio::sync::watch::channel(());
     let background_processor = BackgroundProcessor::start(
         persister,
         event_handler,
@@ -343,6 +347,130 @@ pub async fn start_node() {
         Arc::clone(&logger),
         Some(scorer.clone()),
     );
+
+    // Regularly reconnect to channel peers.
+    let connect_cm = Arc::clone(&channel_manager);
+    let connect_pm = Arc::clone(&peer_manager);
+    let peer_data_path = format!("{}/channel_peer_data", ldk_data_dir.clone());
+    let stop_connect = Arc::clone(&stop_listen_connect);
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(1));
+        loop {
+            interval.tick().await;
+            match disk::read_channel_peer_data(Path::new(&peer_data_path)) {
+                Ok(info) => {
+                    let peers = connect_pm.get_peer_node_ids();
+                    for node_id in connect_cm
+                        .list_channels()
+                        .iter()
+                        .map(|chan| chan.counterparty.node_id)
+                        .filter(|id| !peers.iter().any(|(pk, _)| id == pk))
+                    {
+                        if stop_connect.load(Ordering::Acquire) {
+                            return;
+                        }
+                        for (pubkey, peer_addr) in info.iter() {
+                            if *pubkey == node_id {
+                                let _ = cli::do_connect_peer(
+                                    *pubkey,
+                                    peer_addr.clone(),
+                                    Arc::clone(&connect_pm),
+                                )
+                                .await;
+                            }
+                        }
+                    }
+                }
+                Err(e) => println!(
+                    "ERROR: errored reading channel peer info from disk: {:?}",
+                    e
+                ),
+            }
+        }
+    });
+
+    // Regularly broadcast our node_announcement. This is only required (or possible) if we have
+    // some public channels.
+    let peer_man = Arc::clone(&peer_manager);
+    let chan_man = Arc::clone(&channel_manager);
+    let network = Network::Regtest;
+    let node_name = "nodenamehjo";
+    let announced_listen_addr = "46.116.222.94";
+    tokio::spawn(async move {
+        // First wait a minute until we have some peers and maybe have opened a channel.
+        tokio::time::sleep(Duration::from_secs(60)).await;
+        // Then, update our announcement once an hour to keep it fresh but avoid unnecessary churn
+        // in the global gossip network.
+        let mut interval = tokio::time::interval(Duration::from_secs(3600));
+        loop {
+            interval.tick().await;
+            // Don't bother trying to announce if we don't have any public channls, though our
+            // peers should drop such an announcement anyway. Note that announcement may not
+            // propagate until we have a channel with 6+ confirmations.
+            if chan_man.list_channels().iter().any(|chan| chan.is_public) {
+                peer_man.broadcast_node_announcement(
+                    [0; 3],
+                    str_to_u8( node_name ),
+                    ipv_addr(announced_listen_addr, port),
+                );
+            }
+        }
+    });
+
+    tokio::spawn(sweep::periodic_sweep(
+        ldk_data_dir.clone(),
+        Arc::clone(&keys_manager),
+        Arc::clone(&logger),
+        Arc::clone(&persister),
+        Arc::clone(&core_ldk),
+    ));
+
+    // Start the CLI.
+    cli::poll_for_user_input(
+        Arc::clone(&peer_manager),
+        Arc::clone(&channel_manager),
+        Arc::clone(&keys_manager),
+        Arc::clone(&network_graph),
+        Arc::clone(&onion_messenger),
+        inbound_payments,
+        outbound_payments,
+        ldk_data_dir,
+        network,
+        Arc::clone(&logger),
+    )
+    .await;
+
+    // Disconnect our peers and stop accepting new connections. This ensures we don't continue
+    // updating our channel data after we've stopped the background processor.
+    stop_listen_connect.store(true, Ordering::Release);
+    peer_manager.disconnect_all_peers();
+
+    // Stop the background processor.
+    bp_exit.send(()).unwrap();
+    background_processor.await.unwrap().unwrap();
+}
+
+fn str_to_u8(alias: &str) -> [u8; 32] {
+    let mut bytes = [0; 32];
+    bytes[..alias.len()].copy_from_slice(alias.as_bytes());
+    bytes
+}
+
+fn ipv_addr(s: &str, port: u16) -> Vec<NetAddress> {
+    // define a vector
+    let mut addr = Vec::new();
+    match IpAddr::from_str(s) {
+        Ok(IpAddr::V4(a)) => {
+                addr.push(NetAddress::IPv4 { addr: a.octets(), port } );
+        },
+        Ok(IpAddr::V6(a)) => {
+                addr.push(NetAddress::IPv6 { addr: a.octets(), port } );
+        },
+        Err(_) => {
+            println!("ERROR: invalid IPv4 address: {}", s);
+        },
+    };
+    addr
 }
 
 fn main() {}
