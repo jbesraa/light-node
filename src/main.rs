@@ -9,7 +9,7 @@ use ldk::event_handler::handle_ldk_events;
 use lightning::chain::keysinterface::EntropySource;
 use lightning::chain::{self, chainmonitor, ChannelMonitorUpdateStatus, Watch};
 use lightning::events::Event;
-use lightning::ln::channelmanager::{ChainParameters, ChannelManagerReadArgs};
+use lightning::ln::channelmanager::{ChainParameters, ChannelManagerReadArgs, self};
 use lightning::ln::msgs::NetAddress;
 use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler};
 use lightning::routing::gossip::P2PGossipSync;
@@ -28,7 +28,7 @@ use lightning_persister::FilesystemPersister;
 use rand::Rng;
 use std::collections::HashMap;
 use std::convert::TryInto;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::BufReader;
 use std::net::IpAddr;
 use std::path::Path;
@@ -127,36 +127,56 @@ pub async fn start_node() {
         Arc::clone(&scorer),
     ));
     /* RESTARTING */
+    let mut restarting_node = false;
+	let polled_chain_tip = init::validate_best_block_header(core_ldk.as_ref())
+		.await
+		.expect("Failed to fetch best block header and best block");
 
-    let (channel_manager_blockhash, mut channel_manager) = {
-        let mut channel_manager_file =
-            File::open(format!("{}/manager", ldk_data_dir.clone())).unwrap();
+	let (channel_manager_blockhash, channel_manager) = {
+		if let Ok(mut f) = fs::File::open(format!("{}/manager", ldk_data_dir.clone())) {
+			let mut channel_monitor_mut_references = Vec::new();
+			for (_, channel_monitor) in channel_monitors.iter_mut() {
+				channel_monitor_mut_references.push(channel_monitor);
+			}
+			let read_args = ChannelManagerReadArgs::new(
+				keys_manager.clone(),
+				keys_manager.clone(),
+				keys_manager.clone(),
+				fee_estimator.clone(),
+				chain_monitor.clone(),
+				broadcaster_interface.clone(),
+				router.clone(),
+				logger.clone(),
+				user_config,
+				channel_monitor_mut_references,
+			);
+			<(BlockHash, ChannelManager)>::read(&mut f, read_args).unwrap()
+		} else {
+			// We're starting a fresh node.
+			restarting_node = false;
 
-        // Use the `ChannelMonitors` we read from disk in Step 7.
-        let mut channel_monitor_mut_references = Vec::new();
-        for (_, channel_monitor) in channel_monitors.iter_mut() {
-            channel_monitor_mut_references.push(channel_monitor);
-        }
-        let read_args = ChannelManagerReadArgs::new(
-            keys_manager.clone(),
-            keys_manager.clone(),
-            keys_manager.clone(),
-            fee_estimator.clone(),
-            chain_monitor.clone(),
-            broadcaster_interface.clone(),
-            router.clone(),
-            logger.clone(),
-            user_config,
-            channel_monitor_mut_references,
-        );
-        <(BlockHash, ChannelManager)>::read(&mut channel_manager_file, read_args).unwrap()
-    };
+			let polled_best_block = polled_chain_tip.to_best_block();
+			let polled_best_block_hash = polled_best_block.block_hash();
+			let chain_params =
+				ChainParameters { network: Network::Regtest, best_block: polled_best_block };
+			let fresh_channel_manager = channelmanager::ChannelManager::new(
+				fee_estimator.clone(),
+				chain_monitor.clone(),
+				broadcaster_interface.clone(),
+				router.clone(),
+				logger.clone(),
+				keys_manager.clone(),
+				keys_manager.clone(),
+				keys_manager.clone(),
+				user_config,
+				chain_params,
+			);
+			(polled_best_block_hash, fresh_channel_manager)
+		}
+	};
 
     /* FRESH CHANNELMANAGER */
 
-    let polled_chain_tip = init::validate_best_block_header(core_ldk.clone())
-        .await
-        .expect("Failed to fetch best block header and best block");
     let best_block = polled_chain_tip.to_best_block();
     let best_block_hash = best_block.block_hash();
 
@@ -184,7 +204,6 @@ pub async fn start_node() {
     // End step 8
     let mut chain_listener_channel_monitors = Vec::new();
     let mut cache = UnboundedCache::new();
-    let restarting_node = false;
     let mut chain_tip: Option<poll::ValidatedBlockHeader> = None;
     let mut chain_listeners = vec![(
         channel_manager_blockhash,
@@ -502,4 +521,32 @@ fn ipv_addr(s: &str, port: u16) -> Vec<NetAddress> {
     addr
 }
 
-fn main() {}
+#[tokio::main]
+pub async fn main() {
+    #[cfg(not(target_os = "windows"))]
+    {
+        // Catch Ctrl-C with a dummy signal handler.
+        unsafe {
+            let mut new_action: libc::sigaction = core::mem::zeroed();
+            let mut old_action: libc::sigaction = core::mem::zeroed();
+
+            extern "C" fn dummy_handler(
+                _: libc::c_int,
+                _: *const libc::siginfo_t,
+                _: *const libc::c_void,
+            ) {
+            }
+
+            new_action.sa_sigaction = dummy_handler as libc::sighandler_t;
+            new_action.sa_flags = libc::SA_SIGINFO;
+
+            libc::sigaction(
+                libc::SIGINT,
+                &new_action as *const libc::sigaction,
+                &mut old_action as *mut libc::sigaction,
+            );
+        }
+    }
+
+    start_node().await;
+}

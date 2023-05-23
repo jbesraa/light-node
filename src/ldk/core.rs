@@ -36,8 +36,16 @@ impl CoreLDK {
         let rpc_password: String = "password".to_string();
         let http_endpoint = HttpEndpoint::for_host(host.clone()).with_port(port);
         let rpc_credentials = base64::encode(format!("{}:{}", rpc_user, rpc_password));
+        let bitcoind_rpc_client = RpcClient::new(&rpc_credentials, http_endpoint)?;
+        let _dummy = bitcoind_rpc_client
+            .call_method::<BlockchainInfo>("getblockchaininfo", &vec![])
+            .await
+            .map_err(|_| {
+                std::io::Error::new(std::io::ErrorKind::PermissionDenied,
+				"Failed to make initial call to bitcoind - please check your RPC user/password and access settings")
+            })?;
         Ok(Self {
-            bitcoind_rpc_client: Arc::new(RpcClient::new(&rpc_credentials, http_endpoint)?),
+            bitcoind_rpc_client: Arc::new(bitcoind_rpc_client),
             host,
             port,
             rpc_user,
