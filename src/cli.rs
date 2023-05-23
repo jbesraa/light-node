@@ -17,6 +17,7 @@ use bitcoin::secp256k1::PublicKey;
 use lightning::chain::keysinterface::EntropySource;
 use lightning::chain::keysinterface::KeysManager;
 use lightning::ln::channelmanager::PaymentId;
+use lightning::ln::channelmanager::RecipientOnionFields;
 use lightning::ln::channelmanager::Retry;
 use lightning::ln::msgs::NetAddress;
 use lightning::ln::{PaymentHash, PaymentPreimage};
@@ -31,11 +32,11 @@ use std::env;
 use std::io;
 use std::io::Write;
 use std::net::{SocketAddr, ToSocketAddrs};
+use std::ops::Deref;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use std::ops::Deref;
 
 pub(crate) struct LdkUserInfo {
     pub(crate) bitcoind_rpc_username: String,
@@ -507,10 +508,7 @@ fn list_channels(channel_manager: &Arc<ChannelManager>, network_graph: &Arc<Netw
     for chan_info in channel_manager.list_channels() {
         println!("");
         println!("\t{{");
-        println!(
-            "\t\tchannel_id: {},",
-            hex_str(&chan_info.channel_id[..])
-        );
+        println!("\t\tchannel_id: {},", hex_str(&chan_info.channel_id[..]));
         if let Some(funding_txo) = chan_info.funding_txo {
             println!("\t\tfunding_txid: {},", funding_txo.txid);
         }
@@ -624,20 +622,17 @@ pub(crate) async fn do_connect_peer(
         Some(connection_closed_future) => {
             let mut connection_closed_future = Box::pin(connection_closed_future);
             loop {
-                match futures::poll!(&mut connection_closed_future) {
-                    std::task::Poll::Ready(_) => {
-                        return Err(());
-                    }
-                    std::task::Poll::Pending => {}
-                }
-                // Avoid blocking the tokio context by sleeping a bit
-                match peer_manager
+                tokio::select! {
+                    _ = &mut connection_closed_future => return Err(()),
+                    _ = tokio::time::sleep(Duration::from_millis(10)) => {},
+                };
+                if peer_manager
                     .get_peer_node_ids()
                     .iter()
                     .find(|(id, _)| *id == pubkey)
+                    .is_some()
                 {
-                    Some(_) => return Ok(()),
-                    None => tokio::time::sleep(Duration::from_millis(10)).await,
+                    return Ok(());
                 }
             }
         }
@@ -757,6 +752,7 @@ fn keysend<E: EntropySource>(
     };
     let status = match channel_manager.send_spontaneous_payment_with_retry(
         Some(payment_preimage),
+        RecipientOnionFields::spontaneous_empty(),
         PaymentId(payment_hash.0),
         route_params,
         Retry::Timeout(Duration::from_secs(10)),

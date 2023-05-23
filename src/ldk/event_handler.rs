@@ -1,4 +1,6 @@
 use bitcoin::consensus::encode;
+use lightning::{events::{ Event, PaymentFailureReason, PaymentPurpose }, chain::keysinterface::{SpendableOutputDescriptor, EntropySource}, util::persist::KVStorePersister};
+use lightning_persister::FilesystemPersister;
 use std::{
     collections::HashMap,
     io::{self, Write},
@@ -14,7 +16,6 @@ use lightning::{
         keysinterface::KeysManager,
     },
     routing::gossip::NodeId,
-    util::events::{Event, PaymentPurpose},
 };
 use rand::{thread_rng, Rng};
 use std::collections::hash_map::Entry;
@@ -22,10 +23,13 @@ use std::collections::hash_map::Entry;
 use crate::{
     types::{
         ChannelManager, HTLCStatus, MillisatAmount, NetworkGraph, PaymentInfo, PaymentInfoStorage,
-    }, utils::hex::{to_vec, hex_str},
+    },
+    utils::hex::{hex_str, to_vec},
 };
 
 use super::core::CoreLDK;
+
+pub(crate) const PENDING_SPENDABLE_OUTPUT_DIR: &'static str = "pending_spendable_outputs";
 
 pub async fn handle_ldk_events(
     channel_manager: &Arc<ChannelManager>,
@@ -34,8 +38,9 @@ pub async fn handle_ldk_events(
     keys_manager: &KeysManager,
     inbound_payments: &PaymentInfoStorage,
     outbound_payments: &PaymentInfoStorage,
+    persister: &Arc<FilesystemPersister>,
     network: Network,
-    event: &Event,
+    event: Event,
 ) {
     match event {
         Event::FundingGenerationReady {
@@ -59,7 +64,7 @@ pub async fn handle_ldk_events(
             .expect("Lightning funding tx should always be to a SegWit output")
             .to_address();
             let mut outputs = vec![HashMap::with_capacity(1)];
-            outputs[0].insert(addr, *channel_value_satoshis as f64 / 100_000_000.0);
+            outputs[0].insert(addr, channel_value_satoshis as f64 / 100_000_000.0);
             let raw_tx = bitcoind_client.create_raw_transaction(outputs).await;
 
             // Have your wallet put the inputs into the transaction such that the output is
@@ -77,7 +82,7 @@ pub async fn handle_ldk_events(
             if channel_manager
                 .funding_transaction_generated(
                     &temporary_channel_id,
-                    counterparty_node_id,
+                    &counterparty_node_id,
                     final_tx,
                 )
                 .is_err()
@@ -95,6 +100,8 @@ pub async fn handle_ldk_events(
             receiver_node_id: _,
             via_channel_id: _,
             via_user_channel_id: _,
+            claim_deadline: _,
+            onion_fields: _,
         } => {
             println!(
                 "\nEVENT: received payment from payment hash {} of {} millisatoshis",
@@ -106,8 +113,8 @@ pub async fn handle_ldk_events(
             let payment_preimage = match purpose {
                 PaymentPurpose::InvoicePayment {
                     payment_preimage, ..
-                } => *payment_preimage,
-                PaymentPurpose::SpontaneousPayment(preimage) => Some(*preimage),
+                } => payment_preimage,
+                PaymentPurpose::SpontaneousPayment(preimage) => Some(preimage),
             };
             channel_manager.claim_funds(payment_preimage.unwrap());
         }
@@ -129,11 +136,11 @@ pub async fn handle_ldk_events(
                     payment_preimage,
                     payment_secret,
                     ..
-                } => (*payment_preimage, Some(*payment_secret)),
-                PaymentPurpose::SpontaneousPayment(preimage) => (Some(*preimage), None),
+                } => (payment_preimage, Some(payment_secret)),
+                PaymentPurpose::SpontaneousPayment(preimage) => (Some(preimage), None),
             };
             let mut payments = inbound_payments.lock().unwrap();
-            match payments.entry(*payment_hash) {
+            match payments.entry(payment_hash) {
                 Entry::Occupied(mut e) => {
                     let payment = e.get_mut();
                     payment.status = HTLCStatus::Succeeded;
@@ -145,7 +152,7 @@ pub async fn handle_ldk_events(
                         preimage: payment_preimage,
                         secret: payment_secret,
                         status: HTLCStatus::Succeeded,
-                        amt_msat: MillisatAmount(Some(*amount_msat)),
+                        amt_msat: MillisatAmount(Some(amount_msat)),
                     });
                 }
             }
@@ -158,13 +165,13 @@ pub async fn handle_ldk_events(
         } => {
             let mut payments = outbound_payments.lock().unwrap();
             for (hash, payment) in payments.iter_mut() {
-                if *hash == *payment_hash {
-                    payment.preimage = Some(*payment_preimage);
+                if *hash == payment_hash {
+                    payment.preimage = Some(payment_preimage);
                     payment.status = HTLCStatus::Succeeded;
                     println!(
                         "\nEVENT: successfully sent payment of {} millisatoshis{} from \
 								 payment hash {:?} with preimage {:?}",
-                        &payment.amt_msat,
+                        payment.amt_msat,
                         if let Some(fee) = fee_paid_msat {
                             format!(" (fee {} msat)", fee)
                         } else {
@@ -185,11 +192,20 @@ pub async fn handle_ldk_events(
         Event::PaymentPathFailed { .. } => {}
         Event::ProbeSuccessful { .. } => {}
         Event::ProbeFailed { .. } => {}
-        Event::PaymentFailed { payment_hash, .. } => {
+        Event::PaymentFailed {
+            payment_hash,
+            reason,
+            ..
+        } => {
             print!(
-				"\nEVENT: Failed to send payment to payment hash {:?}: exhausted payment retry attempts",
-				hex_str(&payment_hash.0)
-			);
+                "\nEVENT: Failed to send payment to payment hash {:?}: {:?}",
+                hex_str(&payment_hash.0),
+                if let Some(r) = reason {
+                    r
+                } else {
+                    PaymentFailureReason::RetriesExhausted
+                }
+            );
             print!("> ");
             io::stdout().flush().unwrap();
 
@@ -204,6 +220,7 @@ pub async fn handle_ldk_events(
             next_channel_id,
             fee_earned_msat,
             claim_from_onchain_tx,
+            outbound_amount_forwarded_msat,
         } => {
             let read_only_network_graph = network_graph.read_only();
             let nodes = read_only_network_graph.nodes();
@@ -233,29 +250,34 @@ pub async fn handle_ldk_events(
             };
             let from_prev_str = format!(
                 " from {}{}",
-                node_str(prev_channel_id),
-                channel_str(prev_channel_id)
+                node_str(&prev_channel_id),
+                channel_str(&prev_channel_id)
             );
             let to_next_str = format!(
                 " to {}{}",
-                node_str(next_channel_id),
-                channel_str(next_channel_id)
+                node_str(&next_channel_id),
+                channel_str(&next_channel_id)
             );
 
-            let from_onchain_str = if *claim_from_onchain_tx {
+            let from_onchain_str = if claim_from_onchain_tx {
                 "from onchain downstream claim"
             } else {
                 "from HTLC fulfill message"
             };
+            let amt_args = if let Some(v) = outbound_amount_forwarded_msat {
+                format!("{}", v)
+            } else {
+                "?".to_string()
+            };
             if let Some(fee_earned) = fee_earned_msat {
                 println!(
-                    "\nEVENT: Forwarded payment{}{}, earning {} msat {}",
-                    from_prev_str, to_next_str, fee_earned, from_onchain_str
+                    "\nEVENT: Forwarded payment for {} msat{}{}, earning {} msat {}",
+                    amt_args, from_prev_str, to_next_str, fee_earned, from_onchain_str
                 );
             } else {
                 println!(
-                    "\nEVENT: Forwarded payment{}{}, claiming onchain {}",
-                    from_prev_str, to_next_str, from_onchain_str
+                    "\nEVENT: Forwarded payment for {} msat{}{}, claiming onchain {}",
+                    amt_args, from_prev_str, to_next_str, from_onchain_str
                 );
             }
             print!("> ");
@@ -272,20 +294,39 @@ pub async fn handle_ldk_events(
             });
         }
         Event::SpendableOutputs { outputs } => {
-            let destination_address = bitcoind_client.get_new_address().await;
-            let output_descriptors = &outputs.iter().map(|a| a).collect::<Vec<_>>();
-            let tx_feerate =
-                bitcoind_client.get_est_sat_per_1000_weight(ConfirmationTarget::Normal);
-            let spending_tx = keys_manager
-                .spend_spendable_outputs(
-                    output_descriptors,
-                    Vec::new(),
-                    destination_address.script_pubkey(),
-                    tx_feerate,
-                    &Secp256k1::new(),
-                )
-                .unwrap();
-            bitcoind_client.broadcast_transaction(&spending_tx);
+            // SpendableOutputDescriptors, of which outputs is a vec of, are critical to keep track
+            // of! While a `StaticOutput` descriptor is just an output to a static, well-known key,
+            // other descriptors are not currently ever regenerated for you by LDK. Once we return
+            // from this method, the descriptor will be gone, and you may lose track of some funds.
+            //
+            // Here we simply persist them to disk, with a background task running which will try
+            // to spend them regularly (possibly duplicatively/RBF'ing them). These can just be
+            // treated as normal funds where possible - they are only spendable by us and there is
+            // no rush to claim them.
+            for output in outputs {
+                let key = hex_str(&keys_manager.get_secure_random_bytes());
+                // Note that if the type here changes our read code needs to change as well.
+                let output: SpendableOutputDescriptor = output;
+                persister
+                    .persist(
+                        &format!("{}/{}", PENDING_SPENDABLE_OUTPUT_DIR, key),
+                        &output,
+                    )
+                    .unwrap();
+            }
+        }
+        Event::ChannelPending {
+            channel_id,
+            counterparty_node_id,
+            ..
+        } => {
+            println!(
+                "\nEVENT: Channel {} with peer {} is pending awaiting funding lock-in!",
+                hex_str(&channel_id),
+                hex_str(&counterparty_node_id.serialize()),
+            );
+            print!("> ");
+            io::stdout().flush().unwrap();
         }
         Event::ChannelReady {
             ref channel_id,
@@ -308,7 +349,7 @@ pub async fn handle_ldk_events(
         } => {
             println!(
                 "\nEVENT: Channel {} closed due to: {:?}",
-                hex_str(channel_id),
+                hex_str(&channel_id),
                 reason
             );
             print!("> ");

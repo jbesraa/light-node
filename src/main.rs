@@ -8,6 +8,7 @@ use ldk::core::CoreLDK;
 use ldk::event_handler::handle_ldk_events;
 use lightning::chain::keysinterface::EntropySource;
 use lightning::chain::{self, chainmonitor, ChannelMonitorUpdateStatus, Watch};
+use lightning::events::Event;
 use lightning::ln::channelmanager::{ChainParameters, ChannelManagerReadArgs};
 use lightning::ln::msgs::NetAddress;
 use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler};
@@ -16,10 +17,9 @@ use lightning::routing::router::DefaultRouter;
 use lightning::routing::scoring::ProbabilisticScorer;
 use lightning::routing::scoring::ProbabilisticScoringParameters;
 use lightning::util::config::UserConfig;
-use lightning::util::events::Event;
+
 use lightning::util::ser::ReadableArgs;
-use lightning_background_processor::BackgroundProcessor;
-use lightning_background_processor::GossipSync;
+use lightning_background_processor::{process_events_async, GossipSync};
 use lightning_block_sync::poll;
 use lightning_block_sync::UnboundedCache;
 use lightning_block_sync::{init, SpvClient};
@@ -61,6 +61,9 @@ fn read_network(
 pub async fn start_node() {
     let ldk_data_dir = format!("{}/.ldk", ".");
     let port = 9735;
+    let network = Network::Regtest;
+    let node_name = "nodenamehjo";
+    let announced_listen_addr = "46.116.222.94";
     let handle = tokio::runtime::Handle::current();
     let core_ldk: Arc<CoreLDK> = match CoreLDK::new(handle).await {
         Ok(client) => Arc::new(client),
@@ -308,28 +311,41 @@ pub async fn start_node() {
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
     });
-
-    // Handle Events
-    let channel_manager_event_listener = channel_manager.clone();
-    let keys_manager_listener = keys_manager.clone();
     let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
     let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-    let inbound_pmts_for_events = inbound_payments.clone();
-    let outbount_pmts_for_events = outbound_payments.clone();
-    let bitcoind_rpc = core_ldk.clone();
-    let network_graph_events = network_graph.clone();
-    let handle = tokio::runtime::Handle::current();
+
+    // Step 18: Handle LDK Events
+    let channel_manager_event_listener = Arc::clone(&channel_manager);
+    let bitcoind_client_event_listener = Arc::clone(&core_ldk);
+    let network_graph_event_listener = Arc::clone(&network_graph);
+    let keys_manager_event_listener = Arc::clone(&keys_manager);
+    let inbound_payments_event_listener = Arc::clone(&inbound_payments);
+    let outbound_payments_event_listener = Arc::clone(&outbound_payments);
+    let persister_event_listener = Arc::clone(&persister);
+
+    // Handle Events
     let event_handler = move |event: Event| {
-        handle.block_on(handle_ldk_events(
-            &channel_manager_event_listener,
-            &bitcoind_rpc,
-            &network_graph_events,
-            &keys_manager_listener,
-            &inbound_pmts_for_events,
-            &outbount_pmts_for_events,
-            Network::Regtest,
-            &event,
-        ));
+        let channel_manager_event_listener = Arc::clone(&channel_manager_event_listener);
+        let bitcoind_client_event_listener = Arc::clone(&bitcoind_client_event_listener);
+        let network_graph_event_listener = Arc::clone(&network_graph_event_listener);
+        let keys_manager_event_listener = Arc::clone(&keys_manager_event_listener);
+        let inbound_payments_event_listener = Arc::clone(&inbound_payments_event_listener);
+        let outbound_payments_event_listener = Arc::clone(&outbound_payments_event_listener);
+        let persister_event_listener = Arc::clone(&persister_event_listener);
+        async move {
+            handle_ldk_events(
+                &channel_manager_event_listener,
+                &bitcoind_client_event_listener,
+                &network_graph_event_listener,
+                &keys_manager_event_listener,
+                &inbound_payments_event_listener,
+                &outbound_payments_event_listener,
+                &persister_event_listener,
+                network,
+                event,
+            )
+            .await;
+        }
     };
 
     // Step 18. Initialize the Persister
@@ -337,16 +353,26 @@ pub async fn start_node() {
 
     // Step 19. Start Background Processing
     let (bp_exit, bp_exit_check) = tokio::sync::watch::channel(());
-    let background_processor = BackgroundProcessor::start(
-        persister,
+    let background_processor = tokio::spawn(process_events_async(
+        Arc::clone(&persister),
         event_handler,
-        Arc::clone(&chain_monitor),
-        Arc::clone(&channel_manager),
+        chain_monitor.clone(),
+        channel_manager.clone(),
         GossipSync::p2p(gossip_sync.clone()),
-        Arc::clone(&peer_manager),
-        Arc::clone(&logger),
+        peer_manager.clone(),
+        logger.clone(),
         Some(scorer.clone()),
-    );
+        move |t| {
+            let mut bp_exit_fut_check = bp_exit_check.clone();
+            Box::pin(async move {
+                tokio::select! {
+                    _ = tokio::time::sleep(t) => false,
+                    _ = bp_exit_fut_check.changed() => true,
+                }
+            })
+        },
+        false,
+    ));
 
     // Regularly reconnect to channel peers.
     let connect_cm = Arc::clone(&channel_manager);
@@ -393,9 +419,6 @@ pub async fn start_node() {
     // some public channels.
     let peer_man = Arc::clone(&peer_manager);
     let chan_man = Arc::clone(&channel_manager);
-    let network = Network::Regtest;
-    let node_name = "nodenamehjo";
-    let announced_listen_addr = "46.116.222.94";
     tokio::spawn(async move {
         // First wait a minute until we have some peers and maybe have opened a channel.
         tokio::time::sleep(Duration::from_secs(60)).await;
@@ -410,7 +433,7 @@ pub async fn start_node() {
             if chan_man.list_channels().iter().any(|chan| chan.is_public) {
                 peer_man.broadcast_node_announcement(
                     [0; 3],
-                    str_to_u8( node_name ),
+                    str_to_u8(node_name),
                     ipv_addr(announced_listen_addr, port),
                 );
             }
@@ -461,14 +484,20 @@ fn ipv_addr(s: &str, port: u16) -> Vec<NetAddress> {
     let mut addr = Vec::new();
     match IpAddr::from_str(s) {
         Ok(IpAddr::V4(a)) => {
-                addr.push(NetAddress::IPv4 { addr: a.octets(), port } );
-        },
+            addr.push(NetAddress::IPv4 {
+                addr: a.octets(),
+                port,
+            });
+        }
         Ok(IpAddr::V6(a)) => {
-                addr.push(NetAddress::IPv6 { addr: a.octets(), port } );
-        },
+            addr.push(NetAddress::IPv6 {
+                addr: a.octets(),
+                port,
+            });
+        }
         Err(_) => {
             println!("ERROR: invalid IPv4 address: {}", s);
-        },
+        }
     };
     addr
 }
