@@ -78,6 +78,9 @@ pub(crate) async fn poll_for_user_input(
     ldk_data_dir: String,
     network: Network,
     logger: Arc<disk::FilesystemLogger>,
+    port: u16,
+    announced_listen_addr: &str,
+    node_name: &str
 ) {
     println!(
         "LDK startup successful. Enter \"help\" to view available commands. Press Ctrl-D to quit."
@@ -367,7 +370,14 @@ pub(crate) async fn poll_for_user_input(
 
                     force_close_channel(channel_id, peer_pubkey, channel_manager.clone());
                 }
-                "nodeinfo" => node_info(&channel_manager, &peer_manager),
+                "nodeinfo" => node_info(
+                    &channel_manager,
+                    &peer_manager,
+                    &network,
+                    &port,
+                    &node_name,
+                    &announced_listen_addr,
+                ),
                 "listpeers" => list_peers(peer_manager.clone()),
                 "signmessage" => {
                     const MSG_STARTPOS: usize = "signmessage".len() + 1;
@@ -480,9 +490,20 @@ fn help() {
     println!("      nodeinfo");
 }
 
-fn node_info(channel_manager: &Arc<ChannelManager>, peer_manager: &Arc<PeerManager>) {
+fn node_info(
+    channel_manager: &Arc<ChannelManager>,
+    peer_manager: &Arc<PeerManager>,
+    network: &Network,
+    port: &u16,
+    announced_listen_addr: &str,
+    node_name: &str,
+) {
     println!("\t{{");
     println!("\t\t node_pubkey: {}", channel_manager.get_our_node_id());
+    println!("\t\t network: {}", network);
+    println!("\t\t port: {}", port);
+    println!("\t\t node_name: {}", node_name);
+    println!("\t\t announced_listen_addr: {}", announced_listen_addr);
     let chans = channel_manager.list_channels();
     println!("\t\t num_channels: {}", chans.len());
     println!(

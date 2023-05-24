@@ -478,6 +478,9 @@ pub async fn start_node() {
         ldk_data_dir,
         network,
         Arc::clone(&logger),
+        port,
+        announced_listen_addr,
+        node_name,
     )
     .await;
 
