@@ -29,13 +29,28 @@ pub struct CoreLDK {
 }
 
 impl CoreLDK {
-    pub async fn new(handle: Handle) -> std::io::Result<Self> {
-        let host = "http://127.0.0.1".to_string();
+    pub async fn new() -> std::io::Result<Self> {
+        let handle = tokio::runtime::Handle::current();
+        let host = "127.0.0.1".to_string();
         let rpc_user: String = "admin".to_string();
         let port = 18443;
         let rpc_password: String = "password".to_string();
+        // let http_endpoint = HttpEndpoint::for_host(host.clone()).with_port(port);
+        // let rpc_credentials = base64::encode(format!("{}:{}", rpc_user, rpc_password));
+        // let bitcoind_rpc_client = RpcClient::new(&rpc_credentials, http_endpoint)?;
+        // let _dummy = bitcoind_rpc_client
+        //     .call_method::<BlockchainInfo>("getblockchaininfo", &vec![])
+        //     .await
+        //     .map_err(|_| {
+        //         std::io::Error::new(std::io::ErrorKind::PermissionDenied,
+				// "Failed to make initial call to bitcoind - please check your RPC user/password and access settings")
+        //     })?;
+        // dbg!(&_dummy.latest_height);
         let http_endpoint = HttpEndpoint::for_host(host.clone()).with_port(port);
-        let rpc_credentials = base64::encode(format!("{}:{}", rpc_user, rpc_password));
+        let rpc_credentials =
+            base64::encode(format!("{}:{}", rpc_user.clone(), rpc_password.clone()));
+        dbg!(&rpc_credentials);
+        dbg!(&http_endpoint);
         let bitcoind_rpc_client = RpcClient::new(&rpc_credentials, http_endpoint)?;
         let _dummy = bitcoind_rpc_client
             .call_method::<BlockchainInfo>("getblockchaininfo", &vec![])
@@ -44,15 +59,25 @@ impl CoreLDK {
                 std::io::Error::new(std::io::ErrorKind::PermissionDenied,
 				"Failed to make initial call to bitcoind - please check your RPC user/password and access settings")
             })?;
-        Ok(Self {
+        let mut fees: HashMap<Target, AtomicU32> = HashMap::new();
+        fees.insert(Target::Background, AtomicU32::new(MIN_FEERATE));
+        fees.insert(Target::Normal, AtomicU32::new(2000));
+        fees.insert(Target::HighPriority, AtomicU32::new(5000));
+        let client = Self {
             bitcoind_rpc_client: Arc::new(bitcoind_rpc_client),
             host,
             port,
             rpc_user,
             rpc_password,
+            fees: Arc::new(fees),
             handle: handle.clone(),
-            fees: Arc::new(default_fees()),
-        })
+        };
+        CoreLDK::poll_for_fee_estimates(
+            client.fees.clone(),
+            client.bitcoind_rpc_client.clone(),
+            handle,
+        );
+        Ok(client)
     }
 
     fn poll_for_fee_estimates(
@@ -298,5 +323,15 @@ impl UtxoLookup for CoreLDK {
     fn get_utxo(&self, _genesis_hash: &BlockHash, _short_channel_id: u64) -> UtxoResult {
         // P2PGossipSync takes None for a UtxoLookup, so this will never be called.
         todo!();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[tokio::test]
+    async fn test_new_wallet() {
+        let bitcoinrpc = super::CoreLDK::new().await.unwrap();
+        assert_eq!(bitcoinrpc.port, 18443);
     }
 }

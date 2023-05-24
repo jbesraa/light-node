@@ -64,8 +64,7 @@ pub async fn start_node() {
     let network = Network::Regtest;
     let node_name = "nodenamehjo";
     let announced_listen_addr = "46.116.222.94";
-    let handle = tokio::runtime::Handle::current();
-    let core_ldk: Arc<CoreLDK> = match CoreLDK::new(handle).await {
+    let core_ldk: Arc<CoreLDK> = match CoreLDK::new().await {
         Ok(client) => Arc::new(client),
         Err(e) => {
             println!("FAILED TO START CORELDK: {}", e);

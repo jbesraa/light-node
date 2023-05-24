@@ -172,12 +172,3 @@ impl BitcoinWallet {
         (keys[0].clone(), keys[1].clone())
     }
 }
-
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn test_new_wallet() {
-        let bitcoinrpc = super::BitcoinWallet::new_wallet();
-    }
-}
