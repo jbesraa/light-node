@@ -49,8 +49,6 @@ impl CoreLDK {
         let http_endpoint = HttpEndpoint::for_host(host.clone()).with_port(port);
         let rpc_credentials =
             base64::encode(format!("{}:{}", rpc_user.clone(), rpc_password.clone()));
-        dbg!(&rpc_credentials);
-        dbg!(&http_endpoint);
         let bitcoind_rpc_client = RpcClient::new(&rpc_credentials, http_endpoint)?;
         let _dummy = bitcoind_rpc_client
             .call_method::<BlockchainInfo>("getblockchaininfo", &vec![])

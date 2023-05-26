@@ -1,5 +1,6 @@
 use bitcoin::secp256k1::PublicKey;
-use std::fmt::Write;
+use lightning::ln::msgs::NetAddress;
+use std::{fmt::Write, net::IpAddr, str::FromStr};
 
 pub fn to_vec(hex: &str) -> Option<Vec<u8>> {
     let mut out = Vec::with_capacity(hex.len() / 2);
@@ -43,4 +44,33 @@ pub fn to_compressed_pubkey(hex: &str) -> Option<PublicKey> {
         Ok(pk) => Some(pk),
         Err(_) => None,
     }
+}
+
+pub fn str_to_u8(alias: &str) -> [u8; 32] {
+    let mut bytes = [0; 32];
+    bytes[..alias.len()].copy_from_slice(alias.as_bytes());
+    bytes
+}
+
+pub fn ipv_addr(s: &str, port: u16) -> Vec<NetAddress> {
+    // define a vector
+    let mut addr = Vec::new();
+    match IpAddr::from_str(s) {
+        Ok(IpAddr::V4(a)) => {
+            addr.push(NetAddress::IPv4 {
+                addr: a.octets(),
+                port,
+            });
+        }
+        Ok(IpAddr::V6(a)) => {
+            addr.push(NetAddress::IPv6 {
+                addr: a.octets(),
+                port,
+            });
+        }
+        Err(_) => {
+            println!("ERROR: invalid IPv4 address: {}", s);
+        }
+    };
+    addr
 }

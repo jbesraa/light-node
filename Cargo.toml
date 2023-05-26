@@ -29,5 +29,8 @@ libc = "0.2"
 chrono = "0.4"
 rand = "0.4.0"
 serde_json = { version = "1.0" }
+serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
 fs = "0.0.5"
+
+actix-web = "4"

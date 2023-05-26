@@ -1,23 +1,23 @@
-use crate::types::{
-    ChainMonitor, ChannelManager, NetworkGraph, OnionMessenger, PaymentInfoStorage, PeerManager,
-};
+use crate::types::{ChainMonitor, ChannelManager, OnionMessenger, PaymentInfoStorage, PeerManager};
+use actix_web::web::Data;
+use actix_web::{App, HttpServer};
 use bitcoin::blockdata::constants::genesis_block;
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
+use http_server::routes::lightning_node_info;
+use http_server::state::HttpServerState;
 use ldk::core::CoreLDK;
 use ldk::event_handler::handle_ldk_events;
 use lightning::chain::keysinterface::EntropySource;
 use lightning::chain::{self, chainmonitor, ChannelMonitorUpdateStatus, Watch};
 use lightning::events::Event;
-use lightning::ln::channelmanager::{ChainParameters, ChannelManagerReadArgs, self};
-use lightning::ln::msgs::NetAddress;
+use lightning::ln::channelmanager::{self, ChainParameters, ChannelManagerReadArgs};
 use lightning::ln::peer_handler::{IgnoringMessageHandler, MessageHandler};
 use lightning::routing::gossip::P2PGossipSync;
 use lightning::routing::router::DefaultRouter;
 use lightning::routing::scoring::ProbabilisticScorer;
 use lightning::routing::scoring::ProbabilisticScoringParameters;
 use lightning::util::config::UserConfig;
-
 use lightning::util::ser::ReadableArgs;
 use lightning_background_processor::{process_events_async, GossipSync};
 use lightning_block_sync::poll;
@@ -28,35 +28,21 @@ use lightning_persister::FilesystemPersister;
 use rand::Rng;
 use std::collections::HashMap;
 use std::convert::TryInto;
-use std::fs::{self, File};
-use std::io::BufReader;
-use std::net::IpAddr;
+use std::fs;
 use std::path::Path;
-use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 use utils::disk::FilesystemLogger;
-use utils::{disk, sweep};
+use utils::hex::{ipv_addr, str_to_u8};
+use utils::{disk, read_network, sweep};
 
 pub mod cli;
+pub mod http_server;
 pub mod ldk;
 pub mod types;
 pub mod utils;
 pub mod wallet;
-
-fn read_network(
-    path: &Path,
-    genesis_hash: BlockHash,
-    logger: Arc<FilesystemLogger>,
-) -> NetworkGraph {
-    if let Ok(file) = File::open(path) {
-        if let Ok(graph) = NetworkGraph::read(&mut BufReader::new(file), logger.clone()) {
-            return graph;
-        }
-    }
-    NetworkGraph::new(Network::Regtest, logger)
-}
 
 pub async fn start_node() {
     let ldk_data_dir = format!("{}/.ldk", ".");
@@ -127,52 +113,54 @@ pub async fn start_node() {
     ));
     /* RESTARTING */
     let mut restarting_node = false;
-	let polled_chain_tip = init::validate_best_block_header(core_ldk.as_ref())
-		.await
-		.expect("Failed to fetch best block header and best block");
+    let polled_chain_tip = init::validate_best_block_header(core_ldk.as_ref())
+        .await
+        .expect("Failed to fetch best block header and best block");
 
-	let (channel_manager_blockhash, channel_manager) = {
-		if let Ok(mut f) = fs::File::open(format!("{}/manager", ldk_data_dir.clone())) {
-			let mut channel_monitor_mut_references = Vec::new();
-			for (_, channel_monitor) in channel_monitors.iter_mut() {
-				channel_monitor_mut_references.push(channel_monitor);
-			}
-			let read_args = ChannelManagerReadArgs::new(
-				keys_manager.clone(),
-				keys_manager.clone(),
-				keys_manager.clone(),
-				fee_estimator.clone(),
-				chain_monitor.clone(),
-				broadcaster_interface.clone(),
-				router.clone(),
-				logger.clone(),
-				user_config,
-				channel_monitor_mut_references,
-			);
-			<(BlockHash, ChannelManager)>::read(&mut f, read_args).unwrap()
-		} else {
-			// We're starting a fresh node.
-			restarting_node = false;
+    let (channel_manager_blockhash, channel_manager) = {
+        if let Ok(mut f) = fs::File::open(format!("{}/manager", ldk_data_dir.clone())) {
+            let mut channel_monitor_mut_references = Vec::new();
+            for (_, channel_monitor) in channel_monitors.iter_mut() {
+                channel_monitor_mut_references.push(channel_monitor);
+            }
+            let read_args = ChannelManagerReadArgs::new(
+                keys_manager.clone(),
+                keys_manager.clone(),
+                keys_manager.clone(),
+                fee_estimator.clone(),
+                chain_monitor.clone(),
+                broadcaster_interface.clone(),
+                router.clone(),
+                logger.clone(),
+                user_config,
+                channel_monitor_mut_references,
+            );
+            <(BlockHash, ChannelManager)>::read(&mut f, read_args).unwrap()
+        } else {
+            // We're starting a fresh node.
+            restarting_node = false;
 
-			let polled_best_block = polled_chain_tip.to_best_block();
-			let polled_best_block_hash = polled_best_block.block_hash();
-			let chain_params =
-				ChainParameters { network: Network::Regtest, best_block: polled_best_block };
-			let fresh_channel_manager = channelmanager::ChannelManager::new(
-				fee_estimator.clone(),
-				chain_monitor.clone(),
-				broadcaster_interface.clone(),
-				router.clone(),
-				logger.clone(),
-				keys_manager.clone(),
-				keys_manager.clone(),
-				keys_manager.clone(),
-				user_config,
-				chain_params,
-			);
-			(polled_best_block_hash, fresh_channel_manager)
-		}
-	};
+            let polled_best_block = polled_chain_tip.to_best_block();
+            let polled_best_block_hash = polled_best_block.block_hash();
+            let chain_params = ChainParameters {
+                network: Network::Regtest,
+                best_block: polled_best_block,
+            };
+            let fresh_channel_manager = channelmanager::ChannelManager::new(
+                fee_estimator.clone(),
+                chain_monitor.clone(),
+                broadcaster_interface.clone(),
+                router.clone(),
+                logger.clone(),
+                keys_manager.clone(),
+                keys_manager.clone(),
+                keys_manager.clone(),
+                user_config,
+                chain_params,
+            );
+            (polled_best_block_hash, fresh_channel_manager)
+        }
+    };
 
     /* FRESH CHANNELMANAGER */
 
@@ -465,25 +453,6 @@ pub async fn start_node() {
         Arc::clone(&persister),
         Arc::clone(&core_ldk),
     ));
-
-    // Start the CLI.
-    cli::poll_for_user_input(
-        Arc::clone(&peer_manager),
-        Arc::clone(&channel_manager),
-        Arc::clone(&keys_manager),
-        Arc::clone(&network_graph),
-        Arc::clone(&onion_messenger),
-        inbound_payments,
-        outbound_payments,
-        ldk_data_dir,
-        network,
-        Arc::clone(&logger),
-        port,
-        announced_listen_addr,
-        node_name,
-    )
-    .await;
-
     // Disconnect our peers and stop accepting new connections. This ensures we don't continue
     // updating our channel data after we've stopped the background processor.
     stop_listen_connect.store(true, Ordering::Release);
@@ -492,35 +461,33 @@ pub async fn start_node() {
     // Stop the background processor.
     bp_exit.send(()).unwrap();
     background_processor.await.unwrap().unwrap();
-}
 
-fn str_to_u8(alias: &str) -> [u8; 32] {
-    let mut bytes = [0; 32];
-    bytes[..alias.len()].copy_from_slice(alias.as_bytes());
-    bytes
-}
+    // let listener = TcpListener::bind("127.0.0.1:8181").await.unwrap();
+    let httpdata = Data::new(Mutex::new(HttpServerState {
+        peer_manager: peer_manager.clone(),
+        keys_manager: keys_manager.clone(),
+        logger: logger.clone(),
+        inbound_payments: inbound_payments.clone(),
+        outbound_payments: outbound_payments.clone(),
+        onion_messenger: onion_messenger.clone(),
+        network_graph: network_graph.clone(),
+        channel_manager: channel_manager.clone(),
+        network: network.clone(),
+        port: port.clone(),
+        ldk_data_dir: ldk_data_dir.clone(),
+        announced_listen_addr: announced_listen_addr.to_string(),
+        node_name: node_name.to_string(),
+    }));
 
-fn ipv_addr(s: &str, port: u16) -> Vec<NetAddress> {
-    // define a vector
-    let mut addr = Vec::new();
-    match IpAddr::from_str(s) {
-        Ok(IpAddr::V4(a)) => {
-            addr.push(NetAddress::IPv4 {
-                addr: a.octets(),
-                port,
-            });
-        }
-        Ok(IpAddr::V6(a)) => {
-            addr.push(NetAddress::IPv6 {
-                addr: a.octets(),
-                port,
-            });
-        }
-        Err(_) => {
-            println!("ERROR: invalid IPv4 address: {}", s);
-        }
-    };
-    addr
+    let _httpres = HttpServer::new(move || {
+        App::new()
+            .app_data(Data::clone(&httpdata))
+            .service(lightning_node_info)
+    })
+    .bind(("127.0.0.1", 8181))
+    .unwrap()
+    .run()
+    .await;
 }
 
 #[tokio::main]
