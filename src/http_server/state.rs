@@ -1,4 +1,5 @@
 use crate::{
+    cli::{connect_peer_if_necessary, parse_peer_info},
     types::{ChannelManager, NetworkGraph, OnionMessenger, PaymentInfoStorage, PeerManager},
     utils::disk,
 };
@@ -6,6 +7,13 @@ use bitcoin::Network;
 use lightning::chain::keysinterface::KeysManager;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+#[derive(Serialize, Deserialize)]
+pub struct PeerInfo {
+    pub pubkey: String,
+    pub address: String,
+    pub port: u16,
+}
 
 pub struct HttpServerState {
     pub peer_manager: Arc<PeerManager>,
@@ -58,6 +66,35 @@ impl HttpServerState {
                 .map(|c| c.balance_msat)
                 .sum(),
             num_peers: self.peer_manager.get_peer_node_ids().len(),
+        }
+    }
+
+    pub fn list_peers(&self) -> Vec<bitcoin::secp256k1::PublicKey> {
+        let result = vec![];
+        println!("\t{{");
+        for (pubkey, _) in self.peer_manager.get_peer_node_ids() {
+            result.push(pubkey);
+        }
+        result
+    }
+
+    pub async fn connect_peer(&self, data: PeerInfo) -> Result<(), ()> {
+        let peer_pubkey_and_ip_addr =
+            data.pubkey + "@" + &data.address + ":" + &data.port.to_string();
+        let (pubkey, peer_addr) = match parse_peer_info(peer_pubkey_and_ip_addr) {
+            Ok(info) => info,
+            Err(e) => {
+                panic!("{:?}", e.into_inner().unwrap());
+            }
+        };
+
+        if connect_peer_if_necessary(pubkey, peer_addr, self.peer_manager.clone())
+            .await
+            .is_ok()
+        {
+            Ok(())
+        } else {
+            Err(())
         }
     }
 }
