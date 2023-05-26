@@ -70,8 +70,7 @@ impl HttpServerState {
     }
 
     pub fn list_peers(&self) -> Vec<bitcoin::secp256k1::PublicKey> {
-        let result = vec![];
-        println!("\t{{");
+        let mut result = vec![];
         for (pubkey, _) in self.peer_manager.get_peer_node_ids() {
             result.push(pubkey);
         }

@@ -1,6 +1,7 @@
 use self::disk::FilesystemLogger;
 use crate::types::NetworkGraph;
 use bitcoin::{BlockHash, Network};
+use lightning::util::ser::ReadableArgs;
 use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 
 pub mod convert;
