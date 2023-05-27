@@ -1,0 +1,97 @@
+2023-05-24 14:33:52.533 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-24 14:33:52.534 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-24 14:34:39.544 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 11:17:05.368 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 11:17:05.369 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 11:18:05.370 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-26 11:18:05.372 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-26 11:18:05.384 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-26 11:18:31.322 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 11:35:11.449 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 11:35:11.450 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 11:36:53.750 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 11:36:53.750 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 11:38:27.773 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 11:38:27.774 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 11:38:33.390 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 11:38:57.319 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 11:38:57.320 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 11:38:57.320 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 11:50:46.149 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 11:50:46.150 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 11:50:46.150 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 11:56:08.987 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 11:56:08.988 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 11:56:08.988 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:00:18.552 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:00:18.552 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:00:18.552 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:01:44.029 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:01:44.030 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:01:44.030 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:02:26.504 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:02:26.505 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:02:26.505 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:05:37.451 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:05:37.452 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:05:37.452 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:25:51.733 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:25:51.734 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:25:51.735 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:26:33.959 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:26:33.959 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:26:33.960 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:28:17.177 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:28:17.178 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:28:17.178 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:29:14.136 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:29:14.137 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:29:14.137 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:37:41.674 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:37:41.674 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:37:41.675 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:38:13.495 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:38:13.496 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:38:13.496 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:39:40.315 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:39:40.316 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:39:40.316 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:43:09.141 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:43:09.141 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:43:09.142 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 12:51:22.610 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 12:51:22.611 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 12:51:22.611 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 13:21:02.759 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 13:21:02.760 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 13:21:02.760 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 13:23:05.661 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 13:23:05.662 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 13:23:05.662 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-26 13:24:28.795 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-26 13:24:28.796 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-26 13:24:28.797 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 10:50:24.319 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 10:50:24.319 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 10:50:24.320 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 11:17:47.311 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 11:17:47.313 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 11:17:47.314 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 11:24:43.920 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 11:24:43.921 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 11:24:43.921 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 11:29:44.435 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 11:29:44.436 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 11:29:44.437 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 11:32:21.008 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 11:32:21.009 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 11:32:21.009 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 11:35:25.366 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 11:35:25.367 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 11:35:25.367 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 11:45:43.469 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 11:45:43.470 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 11:45:43.470 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-27 11:49:58.064 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-27 11:49:58.065 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-27 11:49:58.065 TRACE [lightning_background_processor:636] Terminating background processor.
