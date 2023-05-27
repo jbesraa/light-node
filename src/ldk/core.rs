@@ -18,6 +18,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::runtime::Handle;
 
+#[derive(Clone)]
 pub struct CoreLDK {
     bitcoind_rpc_client: Arc<RpcClient>,
     host: String,
@@ -216,10 +217,12 @@ impl CoreLDK {
     }
 
     pub async fn get_blockchain_info(&self) -> BlockchainInfo {
-        self.bitcoind_rpc_client
+        let res = self.bitcoind_rpc_client
             .call_method::<BlockchainInfo>("getblockchaininfo", &vec![])
             .await
-            .unwrap()
+            .unwrap();
+        dbg!(&res);
+        res
     }
 }
 

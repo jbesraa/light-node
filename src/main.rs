@@ -4,7 +4,9 @@ use actix_web::{App, HttpServer};
 use bitcoin::blockdata::constants::genesis_block;
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
-use http_server::routes::lightning_node_info;
+use http_server::routes::{
+    blockchain_info, lightning_node_info, lightning_peers_connect, lightning_peers_list,
+};
 use http_server::state::HttpServerState;
 use ldk::core::CoreLDK;
 use ldk::event_handler::handle_ldk_events;
@@ -50,13 +52,14 @@ pub async fn start_node() {
     let network = Network::Regtest;
     let node_name = "nodenamehjo";
     let announced_listen_addr = "46.116.222.94";
-    let core_ldk: Arc<CoreLDK> = match CoreLDK::new().await {
-        Ok(client) => Arc::new(client),
+    let n_core_ldk: CoreLDK = match CoreLDK::new().await {
+        Ok(client) => client,
         Err(e) => {
             println!("FAILED TO START CORELDK: {}", e);
             return;
         }
     };
+    let core_ldk = Arc::new(n_core_ldk.clone());
     let fee_estimator = core_ldk.clone();
 
     let logger = Arc::new(FilesystemLogger::new(ldk_data_dir.clone()));
@@ -479,10 +482,15 @@ pub async fn start_node() {
         node_name: node_name.to_string(),
     }));
 
+    let state_ldk = Data::new(Mutex::new(n_core_ldk));
     let _httpres = HttpServer::new(move || {
         App::new()
             .app_data(Data::clone(&httpdata))
+            .app_data(Data::clone(&state_ldk))
             .service(lightning_node_info)
+            .service(blockchain_info)
+            .service(lightning_peers_connect)
+            .service(lightning_peers_list)
     })
     .bind(("127.0.0.1", 8181))
     .unwrap()

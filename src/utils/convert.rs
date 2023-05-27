@@ -74,6 +74,7 @@ impl TryInto<FeeResponse> for JsonResponse {
     }
 }
 
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct BlockchainInfo {
     pub latest_height: usize,
     pub latest_blockhash: BlockHash,

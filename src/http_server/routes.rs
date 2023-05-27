@@ -1,10 +1,13 @@
+use crate::{
+    http_server::state::{HttpServerState, PeerInfo},
+    ldk::core::CoreLDK,
+};
 use actix_web::{
     get, post,
     web::{self, Data},
     Responder,
 };
 use std::sync::Mutex;
-use crate::http_server::state::{HttpServerState, PeerInfo};
 
 #[get("/lightning/info")]
 pub async fn lightning_node_info(
@@ -33,4 +36,12 @@ pub async fn lightning_peers_connect(
         Ok(_) => Ok(web::Json("")),
         Err(_) => Err(actix_web::error::ErrorBadRequest("")),
     }
+}
+
+#[get("/blockchain/info")]
+pub async fn blockchain_info(data: Data<Mutex<CoreLDK>>) -> actix_web::Result<impl Responder> {
+    let data = data.lock().unwrap();
+    let bc_info = data.get_blockchain_info().await;
+    dbg!(&bc_info);
+    Ok(web::Json(bc_info))
 }
