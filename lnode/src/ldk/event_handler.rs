@@ -24,16 +24,15 @@ use crate::{
     types::{
         ChannelManager, HTLCStatus, MillisatAmount, NetworkGraph, PaymentInfo, PaymentInfoStorage,
     },
-    utils::hex::{hex_str, to_vec},
+    utils::hex::{hex_str, to_vec}, wallet::BitcoinWallet,
 };
 
-use super::core::CoreLDK;
 
 pub(crate) const PENDING_SPENDABLE_OUTPUT_DIR: &'static str = "pending_spendable_outputs";
 
 pub async fn handle_ldk_events(
     channel_manager: &Arc<ChannelManager>,
-    bitcoind_client: &CoreLDK,
+    bitcoind_client: &BitcoinWallet,
     network_graph: &NetworkGraph,
     keys_manager: &KeysManager,
     inbound_payments: &PaymentInfoStorage,

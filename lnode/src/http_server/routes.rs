@@ -1,6 +1,6 @@
 use crate::{
     http_server::state::{HttpServerState, PeerInfo},
-    ldk::core::CoreLDK,
+    ldk::core::CoreLDK, wallet::BitcoinWallet,
 };
 use actix_web::{
     get, post,
@@ -44,4 +44,12 @@ pub async fn blockchain_info(data: Data<Mutex<CoreLDK>>) -> actix_web::Result<im
     let bc_info = data.get_blockchain_info().await;
     dbg!(&bc_info);
     Ok(web::Json(bc_info))
+}
+
+#[get("/wallet/info")]
+pub async fn wallet_info(data: Data<Mutex<BitcoinWallet>>) -> actix_web::Result<impl Responder> {
+    let data = data.lock().unwrap();
+    let wallet_info = data.wallet_info().unwrap();
+    dbg!(&wallet_info);
+    Ok(web::Json(wallet_info))
 }

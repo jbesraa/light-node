@@ -324,8 +324,9 @@ pub async fn start_node() {
     let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
 
     // Step 18: Handle LDK Events
+    let my_wall = Arc::new(wallet::BitcoinWallet::new_wallet());
     let channel_manager_event_listener = Arc::clone(&channel_manager);
-    let bitcoind_client_event_listener = Arc::clone(&core_ldk);
+    let bitcoind_client_event_listener = Arc::clone(&my_wall);
     let network_graph_event_listener = Arc::clone(&network_graph);
     let keys_manager_event_listener = Arc::clone(&keys_manager);
     let inbound_payments_event_listener = Arc::clone(&inbound_payments);
@@ -341,6 +342,7 @@ pub async fn start_node() {
         let inbound_payments_event_listener = Arc::clone(&inbound_payments_event_listener);
         let outbound_payments_event_listener = Arc::clone(&outbound_payments_event_listener);
         let persister_event_listener = Arc::clone(&persister_event_listener);
+
         async move {
             handle_ldk_events(
                 &channel_manager_event_listener,
@@ -482,11 +484,13 @@ pub async fn start_node() {
         node_name: node_name.to_string(),
     }));
 
+    let wallet_state = Data::new(Mutex::new(my_wall));
     let state_ldk = Data::new(Mutex::new(n_core_ldk));
     let _httpres = HttpServer::new(move || {
         App::new()
             .app_data(Data::clone(&httpdata))
             .app_data(Data::clone(&state_ldk))
+            .app_data(Data::clone(&wallet_state))
             .service(lightning_node_info)
             .service(blockchain_info)
             .service(lightning_peers_connect)

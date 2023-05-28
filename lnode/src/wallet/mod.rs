@@ -17,9 +17,7 @@ use bdk::wallet::{AddressInfo, SyncOptions};
 use bdk::Wallet;
 use bitcoin::{Address, Amount, Transaction, Txid};
 use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
-use lightning_block_sync::http::JsonResponse;
 use std::collections::HashMap;
-use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -61,7 +59,6 @@ pub struct BitcoinWallet {
     pub wallet_name: String,
     pub receive_desc: String,
     pub change_desc: String,
-    pub wallet: Wallet<bdk::sled::Tree>,
     fees: Arc<HashMap<Target, AtomicU32>>,
 }
 
@@ -83,17 +80,20 @@ impl BitcoinWallet {
         Self {
             rpc: BitcoinRPC::new(&wallet_name),
             wallet_name: wallet_name.to_string(),
-            wallet: Wallet::new(
-                &receive_desc,
-                Some(&change_desc),
-                Network::Regtest,
-                Self::create_db_tree(&wallet_name),
-            )
-            .unwrap(),
             receive_desc,
             change_desc,
             fees: Arc::new(fees),
         }
+    }
+
+    pub fn get_wallet(&self) -> Wallet<sled::Tree> {
+        Wallet::new(
+            &self.receive_desc,
+            Some(&self.change_desc),
+            Network::Regtest,
+            Self::create_db_tree(&self.wallet_name),
+        )
+        .unwrap()
     }
 
     pub fn load_wallet(receive_desc: String, change_desc: String) -> Self {
@@ -111,13 +111,6 @@ impl BitcoinWallet {
         Self {
             rpc: BitcoinRPC::new(&wallet_name),
             wallet_name: wallet_name.to_string(),
-            wallet: Wallet::new(
-                &receive_desc,
-                Some(&change_desc),
-                Network::Regtest,
-                Self::create_db_tree(&wallet_name),
-            )
-            .unwrap(),
             receive_desc,
             change_desc,
             fees: Arc::new(fees),
@@ -125,7 +118,8 @@ impl BitcoinWallet {
     }
 
     pub fn sync_wallet(&self) {
-        self.wallet
+        let wallet = self.get_wallet();
+        wallet
             .sync(&self.rpc.client, SyncOptions { progress: None })
             .unwrap();
     }
@@ -185,7 +179,8 @@ impl BitcoinWallet {
     }
 
     pub fn generate_address(&self) -> AddressInfo {
-        self.wallet.get_address(AddressIndex::New).unwrap()
+        let wallet = self.get_wallet();
+        wallet.get_address(AddressIndex::New).unwrap()
     }
 
     pub fn generate_to_address(
