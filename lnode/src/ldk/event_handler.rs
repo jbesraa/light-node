@@ -1,10 +1,5 @@
-use bdk::bitcoincore_rpc::{RawTx, RpcApi};
 use bitcoin::consensus::encode;
-use lightning::{
-    chain::keysinterface::{EntropySource, SpendableOutputDescriptor},
-    events::{Event, PaymentFailureReason, PaymentPurpose},
-    util::persist::KVStorePersister,
-};
+use lightning::{events::{ Event, PaymentFailureReason, PaymentPurpose }, chain::keysinterface::{SpendableOutputDescriptor, EntropySource}, util::persist::KVStorePersister};
 use lightning_persister::FilesystemPersister;
 use std::{
     collections::HashMap,
@@ -29,15 +24,17 @@ use crate::{
     types::{
         ChannelManager, HTLCStatus, MillisatAmount, NetworkGraph, PaymentInfo, PaymentInfoStorage,
     },
-    utils::hex::{hex_str, to_vec},
-    wallet::BitcoinWallet,
+    utils::hex::{hex_str, to_vec}, wallet::BitcoinWallet,
 };
+
+use super::core::CoreLDK;
+
 
 pub(crate) const PENDING_SPENDABLE_OUTPUT_DIR: &'static str = "pending_spendable_outputs";
 
 pub async fn handle_ldk_events(
     channel_manager: &Arc<ChannelManager>,
-    bitcoind_client: &BitcoinWallet,
+    bitcoind_client: &CoreLDK,
     network_graph: &NetworkGraph,
     keys_manager: &KeysManager,
     inbound_payments: &PaymentInfoStorage,
@@ -68,23 +65,20 @@ pub async fn handle_ldk_events(
             .expect("Lightning funding tx should always be to a SegWit output")
             .to_address();
             let mut outputs = vec![HashMap::with_capacity(1)];
-            let amount: bitcoin::Amount = bitcoin::Amount::from_float_in(
-                channel_value_satoshis as f64 / 100_000_000.0,
-                bitcoin::Denomination::MilliSatoshi,
-            )
-            .unwrap();
-            outputs[0].insert(addr, amount);
-            let raw_tx: Transaction = bitcoind_client.create_raw_tx(outputs.get(0).unwrap().clone()).unwrap();
+            outputs[0].insert(addr, channel_value_satoshis as f64 / 100_000_000.0);
+            let raw_tx = bitcoind_client.create_raw_transaction(outputs).await;
 
             // Have your wallet put the inputs into the transaction such that the output is
             // satisfied.
-            let funded_tx = bitcoind_client.fund_raw_tx(raw_tx.raw_hex()).unwrap();
+            let funded_tx = bitcoind_client.fund_raw_transaction(raw_tx).await;
 
             // Sign the final funding transaction and broadcast it.
-            let signed_tx = bitcoind_client.sign_raw_tx(&funded_tx.hex).unwrap();
+            let signed_tx = bitcoind_client
+                .sign_raw_transaction_with_wallet(funded_tx.hex)
+                .await;
             assert_eq!(signed_tx.complete, true);
             let final_tx: Transaction =
-                encode::deserialize(&to_vec(std::str::from_utf8(&signed_tx.hex).unwrap()).unwrap()).unwrap();
+                encode::deserialize(&to_vec(&signed_tx.hex).unwrap()).unwrap();
             // Give the funding transaction back to LDK for opening the channel.
             if channel_manager
                 .funding_transaction_generated(

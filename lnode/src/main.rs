@@ -5,7 +5,7 @@ use bitcoin::blockdata::constants::genesis_block;
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
 use http_server::routes::{
-    blockchain_info, lightning_node_info, lightning_peers_connect, lightning_peers_list,
+    blockchain_info, lightning_node_info, lightning_peers_connect, lightning_peers_list, wallet_info,
 };
 use http_server::state::HttpServerState;
 use ldk::core::CoreLDK;
@@ -322,11 +322,11 @@ pub async fn start_node() {
     });
     let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
     let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-
+    let bdk_wallet = Arc::new(wallet::BitcoinWallet::new_wallet());
     // Step 18: Handle LDK Events
-    let my_wall = Arc::new(wallet::BitcoinWallet::new_wallet());
+    let arc_bdk_wallet = Arc::clone(&bdk_wallet);
     let channel_manager_event_listener = Arc::clone(&channel_manager);
-    let bitcoind_client_event_listener = Arc::clone(&my_wall);
+    let bitcoind_client_event_listener = Arc::clone(&core_ldk);
     let network_graph_event_listener = Arc::clone(&network_graph);
     let keys_manager_event_listener = Arc::clone(&keys_manager);
     let inbound_payments_event_listener = Arc::clone(&inbound_payments);
@@ -337,6 +337,7 @@ pub async fn start_node() {
     let event_handler = move |event: Event| {
         let channel_manager_event_listener = Arc::clone(&channel_manager_event_listener);
         let bitcoind_client_event_listener = Arc::clone(&bitcoind_client_event_listener);
+        let bitcoind_client_event_listener_1 = Arc::clone(&arc_bdk_wallet);
         let network_graph_event_listener = Arc::clone(&network_graph_event_listener);
         let keys_manager_event_listener = Arc::clone(&keys_manager_event_listener);
         let inbound_payments_event_listener = Arc::clone(&inbound_payments_event_listener);
@@ -484,17 +485,18 @@ pub async fn start_node() {
         node_name: node_name.to_string(),
     }));
 
-    let wallet_state = Data::new(Mutex::new(my_wall));
+    let my_wall = Data::new(Mutex::new(bdk_wallet.clone()));
     let state_ldk = Data::new(Mutex::new(n_core_ldk));
     let _httpres = HttpServer::new(move || {
         App::new()
+            .app_data(Data::clone(&my_wall))
             .app_data(Data::clone(&httpdata))
             .app_data(Data::clone(&state_ldk))
-            .app_data(Data::clone(&wallet_state))
             .service(lightning_node_info)
             .service(blockchain_info)
             .service(lightning_peers_connect)
             .service(lightning_peers_list)
+            .service(wallet_info)
     })
     .bind(("127.0.0.1", 8181))
     .unwrap()
@@ -504,6 +506,9 @@ pub async fn start_node() {
 
 #[tokio::main]
 pub async fn main() {
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+
     #[cfg(not(target_os = "windows"))]
     {
         // Catch Ctrl-C with a dummy signal handler.
