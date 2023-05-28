@@ -1,8 +1,10 @@
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::{DerivationPath, KeySource};
 use bdk::bitcoin::Network;
-use bdk::bitcoincore_rpc::bitcoincore_rpc_json::{GetBalancesResult, GetWalletInfoResult};
-use bdk::bitcoincore_rpc::RpcApi;
+use bdk::bitcoincore_rpc::bitcoincore_rpc_json::{
+    GetBalancesResult, GetWalletInfoResult, SignRawTransactionResult,
+};
+use bdk::bitcoincore_rpc::{RawTx, RpcApi};
 use bdk::blockchain::rpc::{Auth, RpcBlockchain, RpcConfig};
 use bdk::blockchain::ConfigurableBlockchain;
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
@@ -13,8 +15,23 @@ use bdk::sled;
 use bdk::wallet::{wallet_name_from_descriptor, AddressIndex};
 use bdk::wallet::{AddressInfo, SyncOptions};
 use bdk::Wallet;
-use bitcoin::Address;
+use bitcoin::{Address, Amount, Transaction, Txid};
+use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
+use lightning_block_sync::http::JsonResponse;
+use std::collections::HashMap;
+use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
+
+const MIN_FEERATE: u32 = 253;
+
+#[derive(Clone, Eq, Hash, PartialEq, Debug)]
+pub enum Target {
+    Background,
+    Normal,
+    HighPriority,
+}
 
 #[derive(Debug)]
 pub struct BitcoinRPC {
@@ -45,6 +62,7 @@ pub struct BitcoinWallet {
     pub receive_desc: String,
     pub change_desc: String,
     pub wallet: Wallet<bdk::sled::Tree>,
+    fees: Arc<HashMap<Target, AtomicU32>>,
 }
 
 impl BitcoinWallet {
@@ -57,6 +75,10 @@ impl BitcoinWallet {
             &Secp256k1::new(),
         )
         .unwrap();
+        let mut fees: HashMap<Target, AtomicU32> = HashMap::new();
+        fees.insert(Target::Background, AtomicU32::new(MIN_FEERATE));
+        fees.insert(Target::Normal, AtomicU32::new(2000));
+        fees.insert(Target::HighPriority, AtomicU32::new(5000));
 
         Self {
             rpc: BitcoinRPC::new(&wallet_name),
@@ -70,6 +92,7 @@ impl BitcoinWallet {
             .unwrap(),
             receive_desc,
             change_desc,
+            fees: Arc::new(fees),
         }
     }
 
@@ -81,6 +104,10 @@ impl BitcoinWallet {
             &Secp256k1::new(),
         )
         .unwrap();
+        let mut fees: HashMap<Target, AtomicU32> = HashMap::new();
+        fees.insert(Target::Background, AtomicU32::new(MIN_FEERATE));
+        fees.insert(Target::Normal, AtomicU32::new(2000));
+        fees.insert(Target::HighPriority, AtomicU32::new(5000));
         Self {
             rpc: BitcoinRPC::new(&wallet_name),
             wallet_name: wallet_name.to_string(),
@@ -93,6 +120,7 @@ impl BitcoinWallet {
             .unwrap(),
             receive_desc,
             change_desc,
+            fees: Arc::new(fees),
         }
     }
 
@@ -100,6 +128,44 @@ impl BitcoinWallet {
         self.wallet
             .sync(&self.rpc.client, SyncOptions { progress: None })
             .unwrap();
+    }
+
+    pub fn create_raw_tx(
+        &self,
+        outputs: HashMap<String, Amount>,
+    ) -> Result<Transaction, bdk::bitcoincore_rpc::Error> {
+        self.rpc
+            .client
+            .create_raw_transaction(&[], &outputs, None, None)
+    }
+
+    pub fn send_raw_tx<R: RawTx>(&self, tx: R) -> Result<Txid, bdk::bitcoincore_rpc::Error> {
+        self.rpc.client.send_raw_transaction(tx)
+    }
+
+    pub fn sign_raw_tx<R: RawTx>(
+        &self,
+        tx: R,
+    ) -> Result<SignRawTransactionResult, bdk::bitcoincore_rpc::Error> {
+        self.rpc
+            .client
+            .sign_raw_transaction_with_wallet(tx, None, None)
+    }
+
+    pub fn fund_raw_tx<R: RawTx>(&self, tx: R) {
+        let options = serde_json::json!({
+            // LDK gives us feerates in satoshis per KW but Bitcoin Core here expects fees
+            // denominated in satoshis per vB. First we need to multiply by 4 to convert weight
+            // units to virtual bytes, then divide by 1000 to convert KvB to vB.
+            "fee_rate": self.get_est_sat_per_1000_weight(ConfirmationTarget::Normal) as f64 / 250.0,
+            // While users could "cancel" a channel open by RBF-bumping and paying back to
+            // themselves, we don't allow it here as its easy to have users accidentally RBF bump
+            // and pay to the channel funding address, which results in loss of funds. Real
+            // LDK-based applications should enable RBF bumping and RBF bump either to a local
+            // change address or to a new channel output negotiated with the same node.
+            "replaceable": false,
+        });
+        self.rpc.client.fund_raw_transaction(tx, None, None);
     }
 
     pub fn wallet_info(&self) -> Result<GetWalletInfoResult, bdk::bitcoincore_rpc::Error> {
@@ -170,5 +236,27 @@ impl BitcoinWallet {
             }
         }
         (keys[0].clone(), keys[1].clone())
+    }
+}
+
+impl FeeEstimator for BitcoinWallet {
+    fn get_est_sat_per_1000_weight(&self, confirmation_target: ConfirmationTarget) -> u32 {
+        match confirmation_target {
+            ConfirmationTarget::Background => self
+                .fees
+                .get(&Target::Background)
+                .unwrap()
+                .load(Ordering::Acquire),
+            ConfirmationTarget::Normal => self
+                .fees
+                .get(&Target::Normal)
+                .unwrap()
+                .load(Ordering::Acquire),
+            ConfirmationTarget::HighPriority => self
+                .fees
+                .get(&Target::HighPriority)
+                .unwrap()
+                .load(Ordering::Acquire),
+        }
     }
 }
