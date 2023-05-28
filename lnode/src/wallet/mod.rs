@@ -2,7 +2,7 @@ use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::{DerivationPath, KeySource};
 use bdk::bitcoin::Network;
 use bdk::bitcoincore_rpc::bitcoincore_rpc_json::{
-    GetBalancesResult, GetWalletInfoResult, SignRawTransactionResult,
+    FundRawTransactionResult, GetBalancesResult, GetWalletInfoResult, SignRawTransactionResult,
 };
 use bdk::bitcoincore_rpc::{RawTx, RpcApi};
 use bdk::blockchain::rpc::{Auth, RpcBlockchain, RpcConfig};
@@ -146,7 +146,10 @@ impl BitcoinWallet {
             .sign_raw_transaction_with_wallet(tx, None, None)
     }
 
-    pub fn fund_raw_tx<R: RawTx>(&self, tx: R) {
+    pub fn fund_raw_tx<R: RawTx>(
+        &self,
+        tx: R,
+    ) -> Result<FundRawTransactionResult, bdk::bitcoincore_rpc::Error> {
         let options = serde_json::json!({
             // LDK gives us feerates in satoshis per KW but Bitcoin Core here expects fees
             // denominated in satoshis per vB. First we need to multiply by 4 to convert weight
@@ -159,7 +162,7 @@ impl BitcoinWallet {
             // change address or to a new channel output negotiated with the same node.
             "replaceable": false,
         });
-        self.rpc.client.fund_raw_transaction(tx, None, None);
+        self.rpc.client.fund_raw_transaction(tx, None, None)
     }
 
     pub fn wallet_info(&self) -> Result<GetWalletInfoResult, bdk::bitcoincore_rpc::Error> {
