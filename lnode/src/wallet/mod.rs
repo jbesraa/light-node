@@ -63,8 +63,8 @@ pub struct BitcoinWallet {
 }
 
 impl BitcoinWallet {
-    pub fn new_wallet() -> Self {
-        let (receive_desc, change_desc) = Self::generate_descx();
+    pub fn new_wallet(mmc: Option<String>) -> Self {
+        let (receive_desc, change_desc) = Self::generate_descx(mmc);
         let wallet_name: String = wallet_name_from_descriptor(
             &receive_desc,
             Some(&change_desc),
@@ -96,7 +96,8 @@ impl BitcoinWallet {
         .unwrap()
     }
 
-    pub fn load_wallet(receive_desc: String, change_desc: String) -> Self {
+    pub fn load_wallet_by_mmc(mmc: String) -> Self {
+        let (receive_desc, change_desc) = Self::generate_descx(Some(mmc));
         let wallet_name: String = wallet_name_from_descriptor(
             &receive_desc,
             Some(&change_desc),
@@ -117,11 +118,9 @@ impl BitcoinWallet {
         }
     }
 
-    pub fn sync_wallet(&self) {
-        let wallet = self.get_wallet();
-        wallet
+    pub fn sync_wallet(&self) -> Result<(), bdk::Error> {
+        self.get_wallet()
             .sync(&self.rpc.client, SyncOptions { progress: None })
-            .unwrap();
     }
 
     pub fn create_raw_tx(
@@ -173,17 +172,12 @@ impl BitcoinWallet {
         self.rpc.client.get_balances()
     }
 
-    pub fn list_wallets_1(&self) -> Vec<std::string::String> {
-        self.rpc.client.list_wallets().unwrap()
+    pub fn list_wallets(&self) -> Result<Vec<std::string::String>, bdk::bitcoincore_rpc::Error> {
+        self.rpc.client.list_wallets()
     }
 
-    pub fn list_wallets(&self) -> Vec<std::string::String> {
-        self.rpc.client.list_wallets().unwrap()
-    }
-
-    pub fn generate_address(&self) -> AddressInfo {
-        let wallet = self.get_wallet();
-        wallet.get_address(AddressIndex::New).unwrap()
+    pub fn generate_address(&self) -> Result<AddressInfo, bdk::Error> {
+        self.get_wallet().get_address(AddressIndex::New)
     }
 
     pub fn generate_to_address(
@@ -203,15 +197,22 @@ impl BitcoinWallet {
         db_tree
     }
 
-    fn generate_descx() -> (String, String) {
+    fn generate_descx(mnemonic: Option<String>) -> (String, String) {
         let secp = Secp256k1::new();
-        let passphrase = None;
-        let mnemonic = Mnemonic::generate((WordCount::Words12, Language::English)).unwrap();
-        println!(
-            "Create new wallet with mnemonic: {:#}",
-            &mnemonic.to_string()
-        );
-        let xkey: ExtendedKey = (mnemonic, passphrase).into_extended_key().unwrap();
+        // let passphrase = None;
+        let xkey: ExtendedKey = match mnemonic {
+            Some(mnemonic) => Mnemonic::from_str(&mnemonic)
+                .unwrap()
+                .into_extended_key()
+                .unwrap(),
+            None => Mnemonic::generate((WordCount::Words12, Language::English))
+                .unwrap()
+                .into_extended_key()
+                .unwrap(),
+        };
+
+        // println!("Wallet  mnemonic: {:#}", &mnemonic.to_string());
+        // let xkey: ExtendedKey = (mnemonic, passphrase).into_extended_key().unwrap();
         let xprv = xkey.into_xprv(Network::Regtest).unwrap();
         // Create derived privkey from the above master privkey
         // We use the following derivation paths for receive and change keys

@@ -5,7 +5,8 @@ use bitcoin::blockdata::constants::genesis_block;
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
 use http_server::routes::{
-    blockchain_info, lightning_node_info, lightning_peers_connect, lightning_peers_list, wallet_info,
+    blockchain_info, lightning_node_info, lightning_peers_connect, lightning_peers_list,
+    wallet_info, wallet_list,
 };
 use http_server::state::HttpServerState;
 use ldk::core::CoreLDK;
@@ -45,6 +46,9 @@ pub mod ldk;
 pub mod types;
 pub mod utils;
 pub mod wallet;
+
+const TEST_MNEMONIC: &str =
+    "winner maid tower wrong rebuild list net amused okay turtle shrimp swallow";
 
 pub async fn start_node() {
     let ldk_data_dir = format!("{}/.ldk", ".");
@@ -322,7 +326,9 @@ pub async fn start_node() {
     });
     let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
     let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-    let bdk_wallet = Arc::new(wallet::BitcoinWallet::new_wallet());
+    let bdk_wallet = Arc::new(wallet::BitcoinWallet::new_wallet(Some(
+        TEST_MNEMONIC.to_string(),
+    )));
     // Step 18: Handle LDK Events
     let arc_bdk_wallet = Arc::clone(&bdk_wallet);
     let channel_manager_event_listener = Arc::clone(&channel_manager);
@@ -497,6 +503,7 @@ pub async fn start_node() {
             .service(lightning_peers_connect)
             .service(lightning_peers_list)
             .service(wallet_info)
+            .service(wallet_list)
     })
     .bind(("127.0.0.1", 8181))
     .unwrap()

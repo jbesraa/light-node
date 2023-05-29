@@ -51,6 +51,12 @@ pub async fn blockchain_info(data: Data<Mutex<CoreLDK>>) -> actix_web::Result<im
 pub async fn wallet_info(data: Data<Mutex<Arc<BitcoinWallet>>>) -> actix_web::Result<impl Responder> {
     let data = data.lock().unwrap();
     let info = data.wallet_info().unwrap();
-    // dbg!(wallet_info);
+    Ok(web::Json(info))
+}
+
+#[get("/wallet/list")]
+pub async fn wallet_list(data: Data<Mutex<Arc<BitcoinWallet>>>) -> actix_web::Result<impl Responder> {
+    let data = data.lock().unwrap();
+    let info = data.list_wallets().unwrap();
     Ok(web::Json(info))
 }
