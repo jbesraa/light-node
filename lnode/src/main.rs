@@ -6,7 +6,7 @@ use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
 use http_server::routes::{
     blockchain_info, lightning_node_info, lightning_peers_connect, lightning_peers_list,
-    wallet_info, wallet_list,
+    wallet_info, wallet_list, generate_to_address, generate_address,
 };
 use http_server::state::HttpServerState;
 use ldk::core::CoreLDK;
@@ -504,6 +504,8 @@ pub async fn start_node() {
             .service(lightning_peers_list)
             .service(wallet_info)
             .service(wallet_list)
+            .service(generate_to_address)
+            .service(generate_address)
     })
     .bind(("127.0.0.1", 8181))
     .unwrap()

@@ -37,6 +37,7 @@ pub fn new(ldk_data_dir: &str) -> KeysManager {
     let cur = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap();
+    dbg!(&keys_seed);
     let manager = KeysManager::new(&keys_seed, cur.as_secs(), cur.subsec_nanos());
     return manager;
 }

@@ -6,7 +6,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bdk = {version = "0.26.0", features=["sqlite", "keys-bip39", "rpc",
+bdk = {version = "0.28.0", features=["sqlite", "keys-bip39", "rpc",
 "futures",  "key-value-db", "bitcoincore-rpc", "compact_filters"] }
 dirs-next = "2.0.0"
 

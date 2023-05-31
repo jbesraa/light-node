@@ -15,6 +15,7 @@ use bdk::sled;
 use bdk::wallet::{wallet_name_from_descriptor, AddressIndex};
 use bdk::wallet::{AddressInfo, SyncOptions};
 use bdk::Wallet;
+use bitcoin::util::bip32::ExtendedPrivKey;
 use bitcoin::{Address, Amount, Transaction, Txid};
 use lightning::chain::chaininterface::{ConfirmationTarget, FeeEstimator};
 use std::collections::HashMap;
@@ -96,28 +97,6 @@ impl BitcoinWallet {
         .unwrap()
     }
 
-    pub fn load_wallet_by_mmc(mmc: String) -> Self {
-        let (receive_desc, change_desc) = Self::generate_descx(Some(mmc));
-        let wallet_name: String = wallet_name_from_descriptor(
-            &receive_desc,
-            Some(&change_desc),
-            Network::Regtest,
-            &Secp256k1::new(),
-        )
-        .unwrap();
-        let mut fees: HashMap<Target, AtomicU32> = HashMap::new();
-        fees.insert(Target::Background, AtomicU32::new(MIN_FEERATE));
-        fees.insert(Target::Normal, AtomicU32::new(2000));
-        fees.insert(Target::HighPriority, AtomicU32::new(5000));
-        Self {
-            rpc: BitcoinRPC::new(&wallet_name),
-            wallet_name: wallet_name.to_string(),
-            receive_desc,
-            change_desc,
-            fees: Arc::new(fees),
-        }
-    }
-
     pub fn sync_wallet(&self) -> Result<(), bdk::Error> {
         self.get_wallet()
             .sync(&self.rpc.client, SyncOptions { progress: None })
@@ -183,9 +162,14 @@ impl BitcoinWallet {
     pub fn generate_to_address(
         &self,
         count: u64,
-        address: Address,
     ) -> Result<Vec<bitcoin::BlockHash>, bdk::bitcoincore_rpc::Error> {
-        self.rpc.client.generate_to_address(count, &address)
+        let address_info = self.get_wallet().get_address(AddressIndex::New).unwrap();
+        let hashes = self
+            .rpc
+            .client
+            .generate_to_address(count, &address_info.address);
+        self.sync_wallet().unwrap();
+        hashes
     }
 
     fn create_db_tree(wallet_name: &str) -> sled::Tree {
@@ -213,7 +197,7 @@ impl BitcoinWallet {
 
         // println!("Wallet  mnemonic: {:#}", &mnemonic.to_string());
         // let xkey: ExtendedKey = (mnemonic, passphrase).into_extended_key().unwrap();
-        let xprv = xkey.into_xprv(Network::Regtest).unwrap();
+        let xprv: ExtendedPrivKey = xkey.into_xprv(Network::Regtest).unwrap();
         // Create derived privkey from the above master privkey
         // We use the following derivation paths for receive and change keys
         // receive: "m/84h/1h/0h/0"
