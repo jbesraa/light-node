@@ -1,1 +1,10 @@
-{"name":"ciao","region":"Afghanistan","website":"ciao","datacap_requested":"100TiB","datacap_weekly_allocation":"10TiB","address":"f1t476jko3mh67btetymtgyaysw4stj5b5hfv46bq","identifier":"No response","data_type":"Public, Open Commercial/Enterprise"}
+{
+  "name": "ciao",
+  "region": "Afghanistan",
+  "website": "ciao",
+  "datacap_requested": "100TiB",
+  "datacap_weekly_allocation": "10TiB",
+  "address": "f1t476jko3mh67btetymtgyaysw4stj5b5hfv46bq",
+  "identifier": "No response",
+  "data_type": "Public, Open Commercial/Enterprise"
+}
