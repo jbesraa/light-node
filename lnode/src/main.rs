@@ -4,10 +4,7 @@ use actix_web::{App, HttpServer};
 use bitcoin::blockdata::constants::genesis_block;
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
-use http_server::routes::{
-    blockchain_info, lightning_node_info, lightning_peers_connect, lightning_peers_list,
-    wallet_info, wallet_list, generate_to_address, generate_address,
-};
+use http_server::routes;
 use http_server::state::HttpServerState;
 use ldk::core::CoreLDK;
 use ldk::event_handler::handle_ldk_events;
@@ -40,6 +37,7 @@ use utils::disk::FilesystemLogger;
 use utils::hex::{ipv_addr, str_to_u8};
 use utils::{disk, read_network, sweep};
 
+pub mod blockchain;
 pub mod cli;
 pub mod http_server;
 pub mod ldk;
@@ -50,12 +48,34 @@ pub mod wallet;
 const TEST_MNEMONIC: &str =
     "winner maid tower wrong rebuild list net amused okay turtle shrimp swallow";
 
+struct NodeConfig<'a> {
+    ldk_data_dir: String,
+    port: u16,
+    network: Network,
+    node_name: &'a str,
+    announced_listen_addr: &'a str,
+}
+
+impl Default for NodeConfig<'static> {
+    fn default() -> Self {
+        NodeConfig {
+            ldk_data_dir: format!("{}/.ldk", "."),
+            port: 9735,
+            network: Network::Regtest,
+            node_name: "nodenamehjo",
+            announced_listen_addr: "0.0.0.0",
+        }
+    }
+}
+
 pub async fn start_node() {
-    let ldk_data_dir = format!("{}/.ldk", ".");
-    let port = 9735;
-    let network = Network::Regtest;
-    let node_name = "nodenamehjo";
-    let announced_listen_addr = "46.116.222.94";
+    let node_config = NodeConfig::default();
+    let ldk_data_dir = node_config.ldk_data_dir.clone();
+    let port = node_config.port;
+    let network = node_config.network;
+    let node_name = node_config.node_name;
+    let announced_listen_addr = node_config.announced_listen_addr;
+
     let n_core_ldk: CoreLDK = match CoreLDK::new().await {
         Ok(client) => client,
         Err(e) => {
@@ -63,7 +83,9 @@ pub async fn start_node() {
             return;
         }
     };
+
     let core_ldk = Arc::new(n_core_ldk.clone());
+
     let fee_estimator = core_ldk.clone();
 
     let logger = Arc::new(FilesystemLogger::new(ldk_data_dir.clone()));
@@ -326,9 +348,9 @@ pub async fn start_node() {
     });
     let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
     let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-    let bdk_wallet = Arc::new(wallet::BitcoinWallet::new_wallet(Some(
+    let bdk_wallet = Arc::new(wallet::BitcoinWallet::load_with_mmc(
         TEST_MNEMONIC.to_string(),
-    )));
+    ));
     // Step 18: Handle LDK Events
     let arc_bdk_wallet = Arc::clone(&bdk_wallet);
     let channel_manager_event_listener = Arc::clone(&channel_manager);
@@ -451,8 +473,8 @@ pub async fn start_node() {
             if chan_man.list_channels().iter().any(|chan| chan.is_public) {
                 peer_man.broadcast_node_announcement(
                     [0; 3],
-                    str_to_u8(node_name),
-                    ipv_addr(announced_listen_addr, port),
+                    str_to_u8(&node_name.to_owned()),
+                    ipv_addr(&announced_listen_addr, port),
                 );
             }
         }
@@ -473,7 +495,6 @@ pub async fn start_node() {
     // Stop the background processor.
     bp_exit.send(()).unwrap();
     background_processor.await.unwrap().unwrap();
-
     // let listener = TcpListener::bind("127.0.0.1:8181").await.unwrap();
     let httpdata = Data::new(Mutex::new(HttpServerState {
         peer_manager: peer_manager.clone(),
@@ -498,14 +519,16 @@ pub async fn start_node() {
             .app_data(Data::clone(&my_wall))
             .app_data(Data::clone(&httpdata))
             .app_data(Data::clone(&state_ldk))
-            .service(lightning_node_info)
-            .service(blockchain_info)
-            .service(lightning_peers_connect)
-            .service(lightning_peers_list)
-            .service(wallet_info)
-            .service(wallet_list)
-            .service(generate_to_address)
-            .service(generate_address)
+            .service(routes::wallet::wallet_list)
+            .service(routes::wallet::generate_address)
+            .service(routes::wallet::my_wallet_info)
+        // .service(blockchain_info)
+        // .service(lightning_peers_connect)
+        // .service(lightning_peers_list)
+        // .service(wallet_info)
+        // .service(wallet_list)
+        // .service(generate_to_address)
+        // .service(generate_address)
     })
     .bind(("127.0.0.1", 8181))
     .unwrap()
@@ -515,33 +538,58 @@ pub async fn start_node() {
 
 #[tokio::main]
 pub async fn main() {
-    std::env::set_var("RUST_LOG", "debug");
+    std::env::set_var("rust_log", "debug");
     env_logger::init();
+    let bdk_wallet = Arc::new(wallet::BitcoinWallet::load_with_mmc(
+        TEST_MNEMONIC.to_string(),
+    ));
+    let blockchain_controller = Arc::new(blockchain::BlockchainHandler::new().await.unwrap());
+    let my_wall = Data::new(Mutex::new(bdk_wallet.clone()));
+    let my_blockchain_controller = Data::new(Mutex::new(blockchain_controller.clone()));
+    let _httpres = HttpServer::new(move || {
+        App::new()
+            .app_data(Data::clone(&my_wall))
+            .app_data(Data::clone(&my_blockchain_controller))
+            .service(routes::wallet::wallet_list)
+            .service(routes::wallet::generate_address)
+            .service(routes::wallet::my_wallet_info)
+            .service(routes::wallet::new_mmc)
+        // .service(blockchain_info)
+        // .service(wallet_info)
+        // .service(my_wallet_info)
+        // .service(wallet_list)
+        // .service(generate_to_address)
+        // .service(generate_address)
+    })
+    .bind(("127.0.0.1", 8181))
+    .unwrap()
+    .run()
+    .await;
 
-    #[cfg(not(target_os = "windows"))]
-    {
-        // Catch Ctrl-C with a dummy signal handler.
-        unsafe {
-            let mut new_action: libc::sigaction = core::mem::zeroed();
-            let mut old_action: libc::sigaction = core::mem::zeroed();
+    //     #[cfg(not(target_os = "windows"))]
+    //     {
+    //         // Catch Ctrl-C with a dummy signal handler.
+    //         unsafe {
+    //             let mut new_action: libc::sigaction = core::mem::zeroed();
+    //             let mut old_action: libc::sigaction = core::mem::zeroed();
 
-            extern "C" fn dummy_handler(
-                _: libc::c_int,
-                _: *const libc::siginfo_t,
-                _: *const libc::c_void,
-            ) {
-            }
+    //             extern "C" fn dummy_handler(
+    //                 _: libc::c_int,
+    //                 _: *const libc::siginfo_t,
+    //                 _: *const libc::c_void,
+    //             ) {
+    //             }
 
-            new_action.sa_sigaction = dummy_handler as libc::sighandler_t;
-            new_action.sa_flags = libc::SA_SIGINFO;
+    //             new_action.sa_sigaction = dummy_handler as libc::sighandler_t;
+    //             new_action.sa_flags = libc::SA_SIGINFO;
 
-            libc::sigaction(
-                libc::SIGINT,
-                &new_action as *const libc::sigaction,
-                &mut old_action as *mut libc::sigaction,
-            );
-        }
-    }
+    //             libc::sigaction(
+    //                 libc::SIGINT,
+    //                 &new_action as *const libc::sigaction,
+    //                 &mut old_action as *mut libc::sigaction,
+    //             );
+    //         }
+    //     }
 
-    start_node().await;
+    //     start_node().await;
 }
