@@ -1,0 +1,20 @@
+{
+  "_type": "DA",
+  "issue_number": 2,
+  "info": {
+    "Core Information": {
+      "data_owner_name": "ciao",
+      "data_owner_region": "Afghanistan",
+      "data_owner_industry": "TODO",
+      "website": "ciao",
+      "social_media": "TODO"
+    },
+    "application_lifecycle": {
+      "validated_time": "2023-06-16 13:57:56.085820365 UTC",
+      "first_allocation_time": "",
+      "is_active": true,
+      "time_of_new_state": "2023-06-16 13:57:56.085827248 UTC"
+    },
+    "datacap_allocations": []
+  }
+}
