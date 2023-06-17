@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
+import { Box, Button, Modal, Typography } from "@mui/material";
 
 const TitleComp = ({ t }: { t: string }) => {
     return (
@@ -16,14 +17,13 @@ const TitleComp = ({ t }: { t: string }) => {
     );
 };
 
-const WalletComp = ({ walletName }: { walletName: string }) => {
+const WalletTile = ({ walletName }: { walletName: string }) => {
     const [balance, setBalance] = useState<number>(0);
     const [recAddress, setRecAddress] = useState<string>("");
 
     useEffect(() => {
         async function walletInfo() {
             try {
-                console.log("walletName", walletName);
                 const info: { balance: number } = await invoke(
                     "wallet_info",
                     {
@@ -31,7 +31,50 @@ const WalletComp = ({ walletName }: { walletName: string }) => {
                     }
                 );
                 setBalance(info.balance);
-                console.log("info", info);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        walletInfo();
+    }, []);
+
+    return (
+        <div
+            style={{
+                border: "2px solid black",
+                borderRadius: "10px",
+                height: "150px",
+                fontSize: "1.5rem",
+                backgroundColor: "orange",
+                cursor: "pointer",
+                fontWeight: "900",
+            }}
+        >
+            <div
+                style={{ textAlign: "center", paddingTop: "3.5rem" }}
+            >{`${walletName}`}</div>
+            <div
+                style={{ textAlign: "center", paddingTop: "1.5rem" }}
+            >{`${balance} BTC`}</div>
+        </div>
+    );
+};
+
+const WalletScreen = ({ walletName }: { walletName: string }) => {
+    const [balance, setBalance] = useState<number>(0);
+    const [recAddress, setRecAddress] = useState<string>("");
+
+    useEffect(() => {
+        async function walletInfo() {
+            try {
+                const info: { balance: number } = await invoke(
+                    "wallet_info",
+                    {
+                        walletName: walletName,
+                    }
+                );
+                setBalance(info.balance);
             } catch (error) {
                 console.log(error);
             }
@@ -42,47 +85,21 @@ const WalletComp = ({ walletName }: { walletName: string }) => {
     return (
         <div
             style={{
+                border: "1px solid black",
+                borderRadius: "10px",
+                height: "150px",
                 fontSize: "1.5rem",
+                backgroundColor: "orange",
+                cursor: "pointer",
                 fontWeight: "900",
             }}
         >
-            {`Name: ${walletName}`}
-            {`Balance: ${balance}`}
-            <input
-                onChange={(i) => setRecAddress(i.target.value)}
-                value={recAddress}
-            />
-            <button
-                style={{ backgroundColor: "black", color: "white" }}
-                onClick={async () => {
-                try {                     const res = await invoke("generate_address", {
-walletName: walletName,
-});
-                console.log(res)
-                } catch(error) {
-                    console.log(error)
-                }                }}
-            >
-                new address
-            </button>
-            <button
-                style={{ backgroundColor: "black", color: "white" }}
-                onClick={() =>
-                    invoke("send", {
-                        sender: walletName,
-                        amount: 0.5,
-                        reciever: recAddress,
-                    })
-                }
-            >
-                Send
-            </button>
-            <button
-                onClick={() => console.log("recieve")}
-                style={{ backgroundColor: "black", color: "white" }}
-            >
-                Recieve
-            </button>
+            <div
+                style={{ textAlign: "center", paddingTop: "3.5rem" }}
+            >{`${walletName}`}</div>
+            <div
+                style={{ textAlign: "center", paddingTop: "1.5rem" }}
+            >{`${balance} BTC`}</div>
         </div>
     );
 };
@@ -145,10 +162,66 @@ interface LNodeInfo {
     num_peers: number;
 }
 
+const style = {
+    position: "absolute" as "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 1000,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    boxShadow: 24,
+    p: 4,
+};
+
+const generateMMC = () => {
+    return "one two three four five six seven eight nine ten eleven twelve";
+};
+
+const CreateWallet = () => {
+    const [mmc, setMMC] = useState<string>("");
+
+    return (
+        <Box sx={style}>
+            <Typography
+                id="modal-modal-title"
+                variant="h6"
+                component="h2"
+            >
+                Create Wallet
+            </Typography>
+            <Button
+                onClick={() => {
+                    const mmc = generateMMC();
+                    setMMC(mmc);
+                }}
+            >
+                Generate MMC
+            </Button>
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr 1fr",
+                }}
+            >
+                {mmc.length ? mmc.split(" ").map((word) => {
+                    return (
+                        <Button style={{ cursor: "default" }}>
+                            {word}
+                        </Button>
+                    );
+                }): null}
+            </div>
+        </Box>
+    );
+};
+
 function App() {
     const [bnodeInfo, setBNodeInfo] = useState<BNodeInfo>(
         {} as BNodeInfo
     );
+    const [isCreateWalletModalOpen, setIsCreateWalletModalOpen] =
+        useState<boolean>(false);
     const [walletList, setWalletList] = useState<string[]>([]);
     const [lnodeInfo, setLNodeInfo] = useState<LNodeInfo>(
         {} as LNodeInfo
@@ -178,20 +251,68 @@ function App() {
     return (
         <div>
             <h1>Soul</h1>
-            <div style={{ fontSize: "2rem" }}> Balance: </div>
-            <button onClick={() => console.log("connect")}>
-                List Wallets
-            </button>
-            <div>
+            <Modal
+                open={isCreateWalletModalOpen}
+                onClose={() => setIsCreateWalletModalOpen(false)}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <CreateWallet />
+            </Modal>
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
+                }}
+            >
                 {walletList.map((wallet) => (
-                    <WalletComp walletName={wallet} />
+                    <WalletTile walletName={wallet} />
                 ))}
-            </div>
-            {/** <LightningNodeInfo nodeInfo={lnodeInfo} />
+                <button
+                    style={{ border: "1px solid black" }}
+                    onClick={() => setIsCreateWalletModalOpen(true)}
+                >
+                    Create Wallet
+                </button>
+                {/** <LightningNodeInfo nodeInfo={lnodeInfo} />
             <div>----------------------</div>
             <BitcoinNodeInfo nodeInfo={bnodeInfo} />**/}
+            </div>
         </div>
     );
 }
 
 export default App;
+// <button
+//     style={{ backgroundColor: "black", color: "white" }}
+//     onClick={async () => {
+//         try {
+//             const res = await invoke("generate_address", {
+//                 walletName: walletName,
+//             });
+//             console.log(res);
+//         } catch (error) {
+//             console.log(error);
+//         }
+//     }}
+// >
+//     new address
+// </button>
+// <button
+//     style={{ backgroundColor: "black", color: "white" }}
+//     onClick={() =>
+//         invoke("send", {
+//             sender: walletName,
+//             amount: 0.5,
+//             reciever: recAddress,
+//         })
+//     }
+// >
+//     Send
+// </button>
+// <button
+//     onClick={() => console.log("recieve")}
+//     style={{ backgroundColor: "black", color: "white" }}
+// >
+//     Recieve
+// </button>
