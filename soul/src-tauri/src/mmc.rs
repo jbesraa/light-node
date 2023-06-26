@@ -1,14 +1,12 @@
-//use bdk::descriptor::Segwitv0;
-//use bdk::keys::bip39::{Language, Mnemonic, WordCount};
-//use bdk::keys::GeneratedKey;
+use bdk::descriptor::Segwitv0;
+use bdk::keys::bip39::{Language, Mnemonic, WordCount};
+use bdk::keys::{GeneratableKey, GeneratedKey};
 
-//pub fn generate_mnemonic() -> String {
-//    // let secp = Secp256k1::new();
-//    let mmc: GeneratedKey<Mnemonic, Segwitv0> =
-//        Mnemonic::generate((WordCount::Words12, Language::English)).unwrap();
-//    mmc.word_iter().collect::<Vec<&str>>().join(" ")
-//    // mmc.into_extended_key().unwrap()
-//}
+pub fn generate_mnemonic() -> String {
+    let mmc: GeneratedKey<Mnemonic, Segwitv0> =
+        Mnemonic::generate((WordCount::Words12, Language::English)).unwrap();
+    mmc.word_iter().collect::<Vec<&str>>().join(" ")
+}
 
 ////test
 //#[cfg(test)]
