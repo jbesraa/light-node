@@ -1,3 +1,4 @@
+use crate::mmc;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::{DerivationPath, KeySource};
 use bdk::bitcoin::Network;
@@ -6,17 +7,17 @@ use bdk::bitcoincore_rpc::bitcoincore_rpc_json::{
 };
 use bdk::bitcoincore_rpc::{Client, RawTx, RpcApi};
 use bdk::blockchain::rpc::{Auth, RpcBlockchain, RpcConfig};
-use bdk::blockchain::Blockchain;
 use bdk::blockchain::ConfigurableBlockchain;
+use bdk::blockchain::{noop_progress, Blockchain};
 use bdk::database::SqliteDatabase;
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::DescriptorKey::Secret;
 use bdk::keys::{DerivableKey, DescriptorKey, ExtendedKey, GeneratableKey};
 use bdk::miniscript::miniscript::Segwitv0;
 use bdk::template::Bip84;
-use bdk::wallet::AddressIndex;
+use bdk::wallet::{wallet_name_from_descriptor, AddressIndex};
 use bdk::wallet::{AddressInfo, SyncOptions};
-use bdk::{sled, LocalUtxo, SignOptions, TransactionDetails};
+use bdk::{sled, KeychainKind, LocalUtxo, SignOptions, TransactionDetails};
 use bitcoin::psbt::PartiallySignedTransaction;
 use bitcoin::util::bip32::ExtendedPrivKey;
 use bitcoin::{Address, Amount, Transaction, Txid};
@@ -55,14 +56,109 @@ pub struct BitcoinRPC {
     rpc: RpcBlockchain,
 }
 
-fn tomato() {
-    // Create a RPC interface
-    let rpc_auth: Auth = Auth::UserPass {
-        username: "admin".to_string(),
-        password: "password".to_string(),
+fn _generate_descx(mnemonic: Option<String>) -> (String, String) {
+    let secp = Secp256k1::new();
+    let xkey: ExtendedKey = match mnemonic {
+        Some(mnemonic) => Mnemonic::from_str(&mnemonic)
+            .unwrap()
+            .into_extended_key()
+            .unwrap(),
+        None => Mnemonic::generate((WordCount::Words12, Language::English))
+            .unwrap()
+            .into_extended_key()
+            .unwrap(),
     };
-    let core_rpc = Client::new("http://127.0.0.1:18443/wallet/test", rpc_auth.into()).unwrap();
-    println!("{:#?}", core_rpc.get_blockchain_info().unwrap())
+
+    let xprv: ExtendedPrivKey = xkey.into_xprv(NETWORK).unwrap();
+    let mut keys = Vec::new();
+    for path in ["m/84h/1h/0h/0", "m/84h/1h/0h/1"] {
+        let deriv_path: DerivationPath = DerivationPath::from_str(path).unwrap();
+        let derived_xprv = &xprv.derive_priv(&secp, &deriv_path).unwrap();
+        let origin: KeySource = (xprv.fingerprint(&secp), deriv_path);
+        let derived_xprv_desc_key: DescriptorKey<Segwitv0> = derived_xprv
+            .into_descriptor_key(Some(origin), DerivationPath::default())
+            .unwrap();
+        if let Secret(key, _, _) = derived_xprv_desc_key {
+            let mut desc = "wpkh(".to_string();
+            desc.push_str(&key.to_string());
+            desc.push_str(")");
+            keys.push(desc);
+        }
+    }
+    (keys[0].clone(), keys[1].clone())
+}
+
+fn extended_keys(mnemonic: &str, network: Network) -> ExtendedPrivKey {
+    let xkey: ExtendedKey = Mnemonic::from_str(&mnemonic)
+        .unwrap()
+        .into_extended_key()
+        .unwrap();
+    let xprv: ExtendedPrivKey = xkey.into_xprv(network).unwrap();
+
+    xprv
+}
+
+fn wallet_dir(wallet_name: &str) -> (SqliteDatabase, File) {
+    let mut datadir = dirs_next::home_dir().unwrap();
+    let file = File::create(format!("/Users/esraa/.bdk-example/{}", &wallet_name)).unwrap();
+    // file.write_all(mnemonic.as_bytes()).unwrap();
+
+    let database_path = format!("{}.sqlite", wallet_name);
+    datadir.push(".bdk-example");
+    datadir.push(database_path.clone());
+    let database = SqliteDatabase::new(datadir);
+    (database, file)
+}
+
+pub fn load_with_mmc(mnemonic: String) -> (bdk::Wallet<SqliteDatabase>, String) {
+    dbg!("Loading wallet with mnemonic: {}", mnemonic.clone());
+    let xprv: ExtendedPrivKey = extended_keys(&mnemonic, NETWORK);
+    let wallet_name = wallet_name_from_descriptor(
+        Bip84(xprv, KeychainKind::External),
+        Some(Bip84(xprv, KeychainKind::Internal)),
+        NETWORK,
+        &Secp256k1::new(),
+    )
+    .expect("Failed to derive on-chain wallet name");
+    let (database, mut file) = wallet_dir(&wallet_name);
+    file.write_all(mnemonic.as_bytes()).unwrap();
+    let bdk_wallet = bdk::Wallet::new(
+        Bip84(xprv, KeychainKind::External),
+        Some(Bip84(xprv, KeychainKind::Internal)),
+        NETWORK,
+        database,
+    )
+    .expect("Failed to set up on-chain wallet");
+    (bdk_wallet, wallet_name)
+}
+
+pub fn tomato() {
+    // let mnemonic: String = mmc::generate_mnemonic();
+    let mnemonic: String =
+        "hero wet visit similar quantum width capable rare genius jewel hood obey".to_string();
+    let (wallet, wallet_name) = load_with_mmc(mnemonic.clone());
+    dbg!(wallet.get_balance().unwrap());
+    let blockchain: RpcBlockchain = RpcBlockchain::from_config(&RpcConfig {
+        url: "http://127.0.0.1:18443".to_string(),
+        auth: Auth::UserPass {
+            username: "admin".to_string(),
+            password: "password".to_string(),
+        },
+        network: NETWORK,
+        wallet_name: wallet_name.clone(),
+        sync_params: None,
+    })
+    .unwrap();
+
+    let address = wallet.get_address(AddressIndex::New).unwrap();
+    blockchain
+        .generate_to_address(101, &address.address)
+        .unwrap();
+
+    wallet
+        .sync(&blockchain, SyncOptions { progress: None })
+        .unwrap();
+    dbg!(wallet.get_balance().unwrap());
 }
 
 impl BitcoinRPC {
@@ -504,3 +600,9 @@ mod tests {
 //         .unwrap(),
 //     None => Self::generate_mnemonic(),
 // };
+// let mut datadir = dirs_next::home_dir().unwrap();
+// let mut file = File::create(format!("/home/ecode/.bdk-example/{}", &wallet_name)).unwrap();
+// let database_path = format!("{}.sqlite", wallet_name);
+// datadir.push(".bdk-example");
+// datadir.push(database_path.clone());
+// let database = SqliteDatabase::new(datadir);
