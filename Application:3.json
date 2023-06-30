@@ -1,0 +1,20 @@
+{
+  "_type": "LDN",
+  "info": {
+    "Core Information": {
+      "data_owner_name": "No Name",
+      "data_owner_region": "No Region",
+      "data_owner_industry": "TODO",
+      "website": "No Website",
+      "social_media": "TODO"
+    },
+    "application_lifecycle": {
+      "state": "GovernanceReview",
+      "validated_time": "2023-06-30 07:04:22.455858679 UTC",
+      "first_allocation_time": "",
+      "is_active": true,
+      "time_of_new_state": "2023-06-30 07:04:22.455871213 UTC"
+    },
+    "datacap_allocations": []
+  }
+}
