@@ -10,11 +10,11 @@
       "social_media": "TODO"
     },
     "application_lifecycle": {
-      "state": "Approval",
+      "state": "Confirmed",
       "validated_time": "2023-07-07 11:19:42.974411157 UTC",
-      "first_allocation_time": "",
-      "is_active": true,
-      "time_of_new_state": "2023-07-07 11:19:46.516584478 UTC"
+      "first_allocation_time": "2023-07-07 11:19:47.579945183 UTC",
+      "is_active": false,
+      "time_of_new_state": "2023-07-07 11:19:47.579967583 UTC"
     },
     "datacap_allocations": [
       {
@@ -27,6 +27,20 @@
           {
             "signing_address": "notary_address",
             "time_of_signature": "time_of_signature",
+            "message_cid": "message_cid"
+          }
+        ]
+      },
+      {
+        "uuid": "uuid",
+        "client_address": "client_address",
+        "timestamp": "2023-07-07 11:19:47.579981684 UTC",
+        "notary_address": "notary_address",
+        "allocation_amount": "time_of_signature",
+        "signers": [
+          {
+            "signing_address": "notary_address",
+            "time_of_signature": "allocation_amount",
             "message_cid": "message_cid"
           }
         ]
