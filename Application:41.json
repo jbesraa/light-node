@@ -10,11 +10,11 @@
       "social_media": "TODO"
     },
     "application_lifecycle": {
-      "state": "GovernanceReview",
+      "state": "Proposal",
       "validated_time": "2023-07-13 15:03:24.627788054 UTC",
       "first_allocation_time": "",
       "is_active": true,
-      "time_of_new_state": "2023-07-13 15:03:24.627808255 UTC"
+      "time_of_new_state": "2023-07-13 15:03:27.263426972 UTC"
     },
     "datacap_allocations": []
   }
