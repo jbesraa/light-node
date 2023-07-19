@@ -1,1 +1,37 @@
-{}
+{
+  "id": 45,
+  "_type": "LDN",
+  "info": {
+    "core_information": {
+      "data_owner_name": "ciao",
+      "data_owner_region": "Afghanistan",
+      "data_owner_industry": "TODO",
+      "website": "ciao",
+      "social_media": "TODO"
+    },
+    "application_lifecycle": {
+      "state": "GovernanceReview",
+      "validated_time": "2023-07-19 13:40:23.396713 UTC",
+      "validated_by": "",
+      "first_allocation_time": "",
+      "is_active": true,
+      "time_of_new_state": "2023-07-19 13:40:23.396724 UTC"
+    },
+    "datacap_allocations": [
+      {
+        "request_information": {
+          "actor": "rust-test[bot]",
+          "uuid": "TODO",
+          "request_id": "random request id",
+          "request_type": "New",
+          "client_address": "f1t476jko3mh67btetymtgyaysw4stj5b5hfv46bq",
+          "created_at": "2023-07-19 13:40:23.396730 UTC",
+          "is_active": true,
+          "allocation_amount": "100TiB",
+          "pr_number": 46
+        },
+        "signers": []
+      }
+    ]
+  }
+}
