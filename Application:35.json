@@ -1,1 +1,23 @@
-{}
+{
+  "id": 35,
+  "_type": "LDN",
+  "info": {
+    "core_information": {
+      "data_owner_name": "ciao",
+      "data_owner_region": "Afghanistan",
+      "data_owner_industry": "TODO",
+      "website": "ciao",
+      "social_media": "TODO"
+    },
+    "application_lifecycle": {
+      "state": "GovernanceReview",
+      "validated_time": "2023-07-20 12:20:10.740921416 UTC",
+      "initial_pr_number": 98,
+      "validated_by": "",
+      "first_allocation_time": "",
+      "is_active": true,
+      "time_of_new_state": "2023-07-20 12:20:10.740929802 UTC"
+    },
+    "datacap_allocations": []
+  }
+}
