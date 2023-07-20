@@ -13,11 +13,25 @@
       "state": "Proposal",
       "validated_time": "2023-07-20 10:52:12.149409077 UTC",
       "initial_pr_number": 88,
-      "validated_by": "actor",
+      "validated_by": "rust-test[bot]",
       "first_allocation_time": "",
       "is_active": true,
-      "time_of_new_state": "2023-07-20 10:52:16.075521049 UTC"
+      "time_of_new_state": "2023-07-20 10:56:49.758354856 UTC"
     },
-    "datacap_allocations": []
+    "datacap_allocations": [
+      {
+        "request_information": {
+          "actor": "rust-test[bot]",
+          "uuid": "TODO",
+          "request_id": "random request id",
+          "request_type": "New",
+          "client_address": "f1t476jko3mh67btetymtgyaysw4stj5b5hfv46bq",
+          "created_at": "2023-07-20 10:56:49.758340689 UTC",
+          "is_active": true,
+          "allocation_amount": "100TiB"
+        },
+        "signers": []
+      }
+    ]
   }
 }
