@@ -10,13 +10,13 @@
       "social_media": "TODO"
     },
     "application_lifecycle": {
-      "state": "Proposal",
+      "state": "Approval",
       "validated_time": "2023-07-24 07:50:01.866518762 UTC",
       "initial_pr_number": 105,
       "validated_by": "jbesraa",
       "first_allocation_time": "",
       "is_active": true,
-      "time_of_new_state": "2023-07-24 07:50:53.456696558 UTC"
+      "time_of_new_state": "2023-07-24 07:51:14.777641207 UTC"
     },
     "datacap_allocations": [
       {
@@ -30,7 +30,13 @@
           "is_active": true,
           "allocation_amount": "100TiB"
         },
-        "signers": []
+        "signers": [
+          {
+            "signing_address": "signing_address_here",
+            "time_of_signature": "time_of_signature_here",
+            "message_cid": "message_cid_here"
+          }
+        ]
       }
     ]
   }
