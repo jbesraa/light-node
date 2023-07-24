@@ -331,7 +331,7 @@ impl UtxoLookup for CoreLDK {
 mod tests {
 
     #[tokio::test]
-    async fn test_new_wallet() {
+    async fn test_rpc_connection() {
         let bitcoinrpc = super::CoreLDK::new().await.unwrap();
         assert_eq!(bitcoinrpc.port, 18443);
     }

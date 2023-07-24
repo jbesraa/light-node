@@ -1,58 +1,72 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+pub mod blockchain;
+pub mod mmc;
+pub mod wallet;
 
-use bitcoin::{network, secp256k1};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use bdk::{
+    bitcoincore_rpc::bitcoincore_rpc_json::GetWalletInfoResult, wallet::AddressInfo,
+    TransactionDetails,
+};
+use bitcoin::Address;
+use blockchain::WalletList;
 use tauri::Manager;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct NodeInfo {
-    pub pubkey: String,
-    pub network: String,
-    pub port: u16,
-    pub node_name: String,
-    pub announced_listen_addr: String,
-    pub num_usable_channels: usize,
-    pub num_channels: usize,
-    pub local_balance_msat: u64,
-    pub num_peers: usize,
-}
-
 #[tauri::command]
-async fn get_data() -> Result<NodeInfo, ()> {
-    let resp = reqwest::get("http://127.0.0.1:8181/lightning/info")
-        .await
-        .unwrap()
-        .json::<NodeInfo>()
-        .await
-        .unwrap();
-    println!("{:#?}", resp);
+async fn list_wallets() -> Result<WalletList, ()> {
+    let blockchain = blockchain::BlockchainHandler::new().await.unwrap();
+    let resp = blockchain.list_wallets().await.unwrap();
     Ok(resp)
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct BlockchainInfo {
-    pub latest_height: usize,
-    pub latest_blockhash: String,
-    pub chain: String,
+#[tauri::command]
+async fn wallet_info(wallet_name: String) -> Result<GetWalletInfoResult, ()> {
+    let wallet = wallet::BitcoinWallet::load_by_wallet_name(wallet_name.clone());
+    wallet.sync_wallet().unwrap();
+    let wallet_info = wallet.wallet_info().unwrap();
+    Ok(wallet_info)
 }
 
 #[tauri::command]
-async fn get_blockchain_info() -> Result<BlockchainInfo, ()> {
-    let resp = reqwest::get("http://127.0.0.1:8181/blockchain/info")
-        .await
-        .unwrap()
-        .json::<BlockchainInfo>()
-        .await
-        .unwrap();
-    Ok(resp)
+async fn generate_address(wallet_name: String) -> Result<String, ()> {
+    let wallet = wallet::BitcoinWallet::load_by_wallet_name(wallet_name.clone());
+    let address_info: AddressInfo = wallet.generate_address().unwrap();
+    Ok(address_info.address.to_string())
+}
+
+#[tauri::command]
+async fn generate_to_address(wallet_name: String) -> Result<(), ()> {
+    let wallet = wallet::BitcoinWallet::load_by_wallet_name(wallet_name.clone());
+    let hashes = wallet.generate_to_address(450);
+    dbg!(hashes.len());
+    Ok(())
+}
+
+#[tauri::command]
+async fn send_tx(sender: String, amount: u64, rec: String) -> Result<bool, ()> {
+    let wallet = wallet::BitcoinWallet::load_by_wallet_name(sender.clone());
+    let address: Address = rec.parse().unwrap();
+    let res = wallet.send_tx(address, amount).unwrap();
+    Ok(res)
+}
+
+#[tauri::command]
+async fn list_txs(wallet_name: String) -> Result<Vec<TransactionDetails>, ()> {
+    let wallet = wallet::BitcoinWallet::load_by_wallet_name(wallet_name.clone());
+    let res = wallet.list_txs().unwrap();
+    Ok(res)
+}
+
+#[tauri::command]
+async fn load_wallet_with_mmc(mmc: String) -> Result<(), ()> {
+    wallet::BitcoinWallet::load_with_mmc(mmc.clone());
+    Ok(())
+}
+
+#[tauri::command]
+async fn new_mmc() -> String {
+    mmc::generate_mnemonic()
 }
 
 fn main() {
@@ -69,9 +83,14 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            get_data,
-            greet,
-            get_blockchain_info
+            list_wallets,
+            wallet_info,
+            generate_address,
+            generate_to_address,
+            send_tx,
+            list_txs,
+            load_wallet_with_mmc,
+            new_mmc
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

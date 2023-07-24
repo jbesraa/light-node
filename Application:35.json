@@ -10,14 +10,39 @@
       "social_media": "TODO"
     },
     "application_lifecycle": {
-      "state": "GovernanceReview",
-      "validated_time": "2023-07-21 09:00:04.785491595 UTC",
-      "initial_pr_number": 101,
-      "validated_by": "",
-      "first_allocation_time": "",
-      "is_active": true,
-      "time_of_new_state": "2023-07-21 09:00:04.785502105 UTC"
+      "state": "Confirmed",
+      "validated_time": "2023-07-20 12:44:41.674402749 UTC",
+      "initial_pr_number": 99,
+      "validated_by": "jbesraa",
+      "first_allocation_time": "2023-07-20 12:45:51.321734771 UTC",
+      "is_active": false,
+      "time_of_new_state": "2023-07-20 12:45:51.321747825 UTC"
     },
-    "datacap_allocations": []
+    "datacap_allocations": [
+      {
+        "request_information": {
+          "actor": "jbesraa",
+          "uuid": "TODO",
+          "request_id": "random request id",
+          "request_type": "New",
+          "client_address": "f1t476jko3mh67btetymtgyaysw4stj5b5hfv46bq",
+          "created_at": "2023-07-20 12:44:54.869585526 UTC",
+          "is_active": true,
+          "allocation_amount": "100TiB"
+        },
+        "signers": [
+          {
+            "signing_address": "signing_address_here",
+            "time_of_signature": "time_of_signature_here",
+            "message_cid": "message_cid_here"
+          },
+          {
+            "signing_address": "signing_address_here",
+            "time_of_signature": "time_of_signature_here",
+            "message_cid": "message_cid_here"
+          }
+        ]
+      }
+    ]
   }
 }

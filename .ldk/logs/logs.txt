@@ -1,0 +1,377 @@
+2023-05-24 11:01:28.992 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-24 11:01:28.992 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-24 11:01:36.013 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-24 12:46:43.324 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-24 12:46:43.325 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-24 12:47:43.327 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:47:43.327 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:47:43.328 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:47:46.302 DEBUG [lightning::ln::peer_handler:1206] Finished noise handshake for connection with 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:47:46.302 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Init { features: [162, 81, 10, 8, 128, 160, 8], remote_network_address: None } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:47:46.302 INFO  [lightning::ln::peer_handler:1334] Received peer Init message from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9: DataLossProtect: supported, InitialRoutingSync: not supported, UpfrontShutdownScript: supported, GossipQueries: supported, VariableLengthOnion: required, StaticRemoteKey: required, PaymentSecret: required, BasicMPP: supported, Wumbo: supported, AnchorsZeroFeeHtlcTx: not supported, ShutdownAnySegwit: supported, OnionMessages: supported, ChannelType: supported, SCIDPrivacy: supported, ZeroConf: supported, unknown flags: none
+2023-05-24 12:47:46.302 DEBUG [lightning::ln::channelmanager:6563] Generating channel_reestablish events for 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:47:46.302 TRACE [lightning_background_processor:636] Persisting ChannelManager...
+2023-05-24 12:47:46.302 TRACE [lightning::ln::peer_handler:1071] Enqueueing message GossipTimestampFilter { chain_hash: 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206, first_timestamp: 1683722866, timestamp_range: 4294967295 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:47:46.304 TRACE [lightning_background_processor:636] Done persisting ChannelManager.
+2023-05-24 12:48:16.305 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:48:16.305 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:48:16.305 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:48:16.305 TRACE [lightning_background_processor:636] Pruning and persisting network graph.
+2023-05-24 12:48:16.307 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:48:16.307 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:48:16.308 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:48:16.308 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:48:16.308 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:49:16.310 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:49:16.310 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:49:16.310 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:49:16.312 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:49:16.312 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:49:16.352 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:49:16.352 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:49:46.313 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:50:16.314 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:50:16.314 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:50:16.314 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:50:16.316 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:50:16.316 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:50:16.316 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:50:16.316 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:51:16.318 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:51:16.319 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:51:16.319 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:51:16.319 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:51:16.319 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:51:16.319 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:51:16.319 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:51:16.320 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:52:16.322 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:52:16.323 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:52:16.323 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:52:16.324 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:52:16.325 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:52:16.325 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:52:16.325 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 12:52:45.427 TRACE [lightning::ln::peer_handler:1953] Disconnecting peer with id 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9 due to client request to disconnect all peers
+2023-05-24 12:52:45.428 DEBUG [lightning::ln::channelmanager:6460] Marking channels with 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9 disconnected and generating channel_updates.
+2023-05-24 12:52:45.428 TRACE [lightning_background_processor:636] Persisting ChannelManager...
+2023-05-24 12:52:45.430 TRACE [lightning_background_processor:636] Done persisting ChannelManager.
+2023-05-24 12:52:45.430 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:52:45.430 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:52:45.430 TRACE [lightning_background_processor:636] Pruning and persisting network graph.
+2023-05-24 12:52:45.431 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:52:45.431 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:52:45.431 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-24 12:52:55.730 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-24 12:52:55.730 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-24 12:53:55.732 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:53:55.733 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:53:55.734 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:54:25.735 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:54:25.735 TRACE [lightning_background_processor:636] Pruning and persisting network graph.
+2023-05-24 12:54:55.737 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:54:55.737 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:54:55.738 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:55:55.742 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:55:55.742 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:55:55.742 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:55:55.743 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:56:55.747 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:56:55.747 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:56:55.748 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:57:25.749 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:57:55.750 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:57:55.750 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:57:55.752 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:58:55.754 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 12:58:55.754 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:58:55.754 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:58:55.755 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 12:59:55.758 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 12:59:55.758 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 12:59:55.760 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:00:25.761 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:00:43.643 TRACE [lightning_background_processor:636] Terminating background processor.
+2023-05-24 13:00:54.368 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred on startup
+2023-05-24 13:00:54.368 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims on startup
+2023-05-24 13:01:54.370 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:01:54.370 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:01:54.372 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:02:24.373 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:02:24.373 TRACE [lightning_background_processor:636] Pruning and persisting network graph.
+2023-05-24 13:02:45.120 DEBUG [lightning::ln::peer_handler:1192] Finished noise handshake for connection with 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:02:45.120 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Init { features: [162, 81, 10, 8, 128, 160, 8], remote_network_address: None } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:02:45.120 INFO  [lightning::ln::peer_handler:1334] Received peer Init message from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9: DataLossProtect: supported, InitialRoutingSync: not supported, UpfrontShutdownScript: supported, GossipQueries: supported, VariableLengthOnion: required, StaticRemoteKey: required, PaymentSecret: required, BasicMPP: supported, Wumbo: supported, AnchorsZeroFeeHtlcTx: not supported, ShutdownAnySegwit: supported, OnionMessages: supported, ChannelType: supported, SCIDPrivacy: supported, ZeroConf: supported, unknown flags: none
+2023-05-24 13:02:45.120 DEBUG [lightning::ln::channelmanager:6563] Generating channel_reestablish events for 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:02:45.120 TRACE [lightning::ln::peer_handler:1071] Enqueueing message GossipTimestampFilter { chain_hash: 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206, first_timestamp: 1683723765, timestamp_range: 4294967295 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:02:45.120 TRACE [lightning_background_processor:636] Persisting ChannelManager...
+2023-05-24 13:02:45.122 TRACE [lightning_background_processor:636] Done persisting ChannelManager.
+2023-05-24 13:02:53.255 TRACE [lightning::ln::peer_handler:1972] Handling disconnection of peer 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:02:53.255 DEBUG [lightning::ln::channelmanager:6460] Marking channels with 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9 disconnected and generating channel_updates.
+2023-05-24 13:02:53.255 TRACE [lightning_background_processor:636] Persisting ChannelManager...
+2023-05-24 13:02:53.263 TRACE [lightning_background_processor:636] Done persisting ChannelManager.
+2023-05-24 13:03:19.999 DEBUG [lightning::ln::peer_handler:1192] Finished noise handshake for connection with 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:19.999 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Init { features: [162, 81, 10, 8, 128, 160, 8], remote_network_address: None } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:20.000 INFO  [lightning::ln::peer_handler:1334] Received peer Init message from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9: DataLossProtect: supported, InitialRoutingSync: not supported, UpfrontShutdownScript: supported, GossipQueries: supported, VariableLengthOnion: required, StaticRemoteKey: required, PaymentSecret: required, BasicMPP: supported, Wumbo: supported, AnchorsZeroFeeHtlcTx: not supported, ShutdownAnySegwit: supported, OnionMessages: supported, ChannelType: supported, SCIDPrivacy: supported, ZeroConf: supported, unknown flags: none
+2023-05-24 13:03:20.000 DEBUG [lightning::ln::channelmanager:6563] Generating channel_reestablish events for 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:20.000 TRACE [lightning::ln::peer_handler:1071] Enqueueing message GossipTimestampFilter { chain_hash: 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206, first_timestamp: 1683723800, timestamp_range: 4294967295 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:20.000 TRACE [lightning_background_processor:636] Persisting ChannelManager...
+2023-05-24 13:03:20.002 TRACE [lightning_background_processor:636] Done persisting ChannelManager.
+2023-05-24 13:03:20.002 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:03:20.002 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:20.002 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:03:20.003 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:03:20.045 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:50.003 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:50.003 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:03:50.005 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:04:20.007 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:04:20.007 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:04:20.007 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:04:20.008 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:04:20.008 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:04:50.008 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:04:50.008 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:05:20.010 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:05:20.010 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:05:20.010 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:05:20.010 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:05:20.011 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:05:20.011 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:05:50.011 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:05:50.012 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:06:20.015 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:06:20.015 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:06:20.015 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:06:20.016 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:06:20.016 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:06:50.015 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:06:50.015 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:06:50.017 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:07:20.019 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:07:20.019 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:07:20.019 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:07:20.020 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:07:20.021 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:07:50.020 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:07:50.020 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:08:20.023 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:08:20.023 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:08:20.023 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:08:20.023 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:08:20.025 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:08:20.025 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:08:50.025 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:08:50.025 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:09:20.027 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:09:20.027 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:09:20.027 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:09:20.029 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:09:20.029 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:09:50.029 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:09:50.029 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:09:50.030 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:10:20.032 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:10:20.032 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:10:20.032 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:10:20.034 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:10:20.034 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:10:50.032 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:10:50.032 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:11:20.037 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:11:20.037 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:11:20.037 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:11:20.037 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:11:20.039 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:11:20.039 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:11:50.035 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:11:50.035 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:12:20.040 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:12:20.040 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:12:20.040 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:12:20.042 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:12:20.042 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:12:50.039 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:12:50.039 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:12:50.042 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:13:20.043 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:13:20.043 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:13:20.044 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:13:20.045 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:13:20.045 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:13:50.043 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:13:50.043 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:14:20.047 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:14:20.047 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:14:20.047 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:14:20.047 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:14:20.049 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:14:20.049 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:14:50.046 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:14:50.046 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:15:20.050 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:15:20.050 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:15:20.050 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:15:20.052 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:15:20.052 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:15:50.050 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:15:50.050 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:15:50.052 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:16:20.053 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:16:20.053 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:16:20.053 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:16:20.055 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:16:20.055 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:16:50.055 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:16:50.055 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:17:20.058 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:17:20.059 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:17:20.059 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:17:20.059 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:17:20.060 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:17:20.061 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:17:50.062 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:17:50.062 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:18:20.062 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:18:20.062 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:18:20.062 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:18:20.064 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:18:20.064 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:18:50.065 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:18:50.066 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:18:50.066 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:19:20.066 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:19:20.066 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:19:20.067 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:19:20.068 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:19:20.068 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:19:50.071 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:19:50.071 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:20:20.071 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:20:20.071 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:20:20.071 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:20:20.071 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:20:20.073 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:20:20.073 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:20:50.075 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:20:50.075 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:21:20.075 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:21:20.075 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:21:20.075 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:21:20.077 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:21:20.077 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:21:50.078 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:21:50.080 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:21:50.080 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:22:20.080 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:22:20.080 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:22:20.080 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:22:20.081 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:22:20.082 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:22:50.084 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:22:50.084 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:23:20.084 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:23:20.084 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:23:20.084 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:23:20.084 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:23:20.086 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:23:20.086 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:23:50.090 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:23:50.090 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:24:20.088 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:24:20.088 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:24:20.089 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:24:20.090 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:24:20.090 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:24:50.091 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:24:50.093 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:24:50.093 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:25:20.093 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:25:20.093 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:25:20.093 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:25:20.094 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:25:20.095 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:25:50.098 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:25:50.098 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:26:20.097 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:26:20.097 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:26:20.097 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:26:20.097 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:26:20.098 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:26:20.099 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:26:50.101 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:26:50.101 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:27:20.101 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:27:20.101 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:27:20.101 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:27:20.103 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:27:20.103 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:27:50.104 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:27:50.105 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:27:50.105 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:28:20.106 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:28:20.106 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:28:20.106 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:28:20.108 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:28:20.108 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:28:50.109 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:28:50.109 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:29:20.110 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:29:20.110 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:29:20.110 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:29:20.110 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:29:20.111 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:29:20.111 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:29:50.113 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:29:50.113 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:30:20.114 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:30:20.115 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:30:20.115 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:30:20.116 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:30:20.116 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:30:50.118 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:30:50.118 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:30:50.118 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:31:20.119 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:31:20.119 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:31:20.119 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:31:20.121 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:31:20.122 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:31:50.122 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:31:50.122 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:32:20.123 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:32:20.123 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:32:20.123 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:32:20.123 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:32:20.125 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:32:20.125 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:32:50.128 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:32:50.128 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:33:20.128 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:33:20.129 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:33:20.129 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:33:20.130 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:33:20.130 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:33:50.131 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:33:50.131 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:33:50.131 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:34:20.132 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:34:20.132 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:34:20.133 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:34:20.134 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:34:20.135 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:34:50.135 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:34:50.135 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:35:20.137 TRACE [lightning_background_processor:636] Calling ChannelManager's timer_tick_occurred
+2023-05-24 13:35:20.137 TRACE [lightning_background_processor:636] Calling PeerManager's timer_tick_occurred
+2023-05-24 13:35:20.137 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Ping { ponglen: 0, byteslen: 64 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:35:20.137 TRACE [lightning_background_processor:636] Persisting scorer
+2023-05-24 13:35:20.138 TRACE [lightning_background_processor:636] Rebroadcasting monitor's pending claims
+2023-05-24 13:35:20.138 TRACE [lightning::ln::peer_handler:1381] Received message Pong(Pong { byteslen: 0 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:35:50.138 TRACE [lightning::ln::peer_handler:1381] Received message Ping(Ping { ponglen: 0, byteslen: 64 }) from 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:35:50.138 TRACE [lightning::ln::peer_handler:1071] Enqueueing message Pong { byteslen: 0 } to 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:35:54.587 TRACE [lightning::ln::peer_handler:1972] Handling disconnection of peer 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9
+2023-05-24 13:35:54.587 DEBUG [lightning::ln::channelmanager:6460] Marking channels with 0379f27ce09545a74b437347063dfcfc5e4929461565dc525188fc31749a049ff9 disconnected and generating channel_updates.
+2023-05-24 13:35:54.587 TRACE [lightning_background_processor:636] Persisting ChannelManager...
+2023-05-24 13:35:54.588 TRACE [lightning_background_processor:636] Done persisting ChannelManager.
+2023-05-24 13:35:56.666 TRACE [lightning_background_processor:636] Terminating background processor.
