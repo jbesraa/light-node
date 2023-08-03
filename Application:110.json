@@ -1,0 +1,48 @@
+{
+  "id": "110",
+  "_type": "LDN",
+  "info": {
+    "core_information": {
+      "data_owner_name": "ciao",
+      "data_owner_region": "Afghanistan",
+      "data_owner_industry": "TODO",
+      "website": "ciao",
+      "social_media": "TODO"
+    },
+    "application_lifecycle": {
+      "state": "Confirmed",
+      "validated_time": "2023-07-24 08:32:46.130346153 UTC",
+      "initial_pr_number": 111,
+      "validated_by": "jbesraa",
+      "first_allocation_time": "2023-07-24 08:33:21.592432941 UTC",
+      "is_active": false,
+      "time_of_new_state": "2023-07-24 08:33:21.592443401 UTC"
+    },
+    "datacap_allocations": [
+      {
+        "request_information": {
+          "actor": "jbesraa",
+          "uuid": "TODO",
+          "request_id": "random request id",
+          "request_type": "New",
+          "client_address": "f1t476jko3mh67btetymtgyaysw4stj5b5hfv46bq",
+          "created_at": "2023-07-24 08:32:55.916751058 UTC",
+          "is_active": true,
+          "allocation_amount": "100TiB"
+        },
+        "signers": [
+          {
+            "signing_address": "signing_address_here",
+            "time_of_signature": "time_of_signature_here",
+            "message_cid": "message_cid_here"
+          },
+          {
+            "signing_address": "signing_address_here",
+            "time_of_signature": "time_of_signature_here",
+            "message_cid": "message_cid_here"
+          }
+        ]
+      }
+    ]
+  }
+}
